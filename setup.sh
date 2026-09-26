@@ -82,7 +82,8 @@ M_ORFR=$(prompt_yn "or-free (openrouter meta-router) - generic fallback" y)
 M_PRO=$(prompt_yn "pro (gemini-3-pro-preview) - adversarial debate" y)
 
 # guard: warn if user selected nothing (both no skills AND no models)
-if [ "$S_CAVE" = 0 ] && [ "$S_PENT" = 0 ] && [ "$S_VALI" = 0 ] && \
+if [ "$S_ARCH" = 0 ] && [ "$S_TEST" = 0 ] && [ "$S_SHIP" = 0 ] && \
+   [ "$S_IR" = 0 ] && [ "$S_RETRO" = 0 ] && \
    [ "$M_GROQ" = 0 ] && [ "$M_NEMO" = 0 ] && [ "$M_GROK" = 0 ] && \
    [ "$M_FLSH" = 0 ] && [ "$M_ORFR" = 0 ] && [ "$M_PRO" = 0 ]; then
   warn "you selected no skills and no models; the hook would be inert."
