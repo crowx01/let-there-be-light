@@ -6,7 +6,7 @@
 
 ## What it is
 
-It is a framework of Claude Code skills that turns Claude Opus into a senior engineer across the full dev lifecycle: design, implementation, staging, production. It ships hooks that install a delegate-first routing doctrine so Claude keeps its context for judgment while cheaper models do the busy work.
+It is a framework of skills that turns your AI orchestrator into a senior engineer covering design, implementation, staging, and production. It installs into Claude Code, Cursor, Cline, Codex CLI, Aider, or generates a portable `SYSTEM_PROMPT.md` when the orchestrator is not one of the five. The wizard walks you through picking the orchestrator, the install scope, the skills, and the PAL models. The higher-tier model makes the architectural decisions while cheaper models handle the busy work.
 
 ## The days of creation (skills)
 
@@ -21,7 +21,7 @@ It is a framework of Claude Code skills that turns Claude Opus into a senior eng
 | [debate-review](skills/debate-review/SKILL.md) | Two-model PR debate, posts one review from your gh/glab/az. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 | [babysit-pr](skills/babysit-pr/SKILL.md) | PR review rounds automation: verify, fix, reply, resolve, re-run. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 
-## What stays in Claude (never delegated)
+## What stays in your orchestrator (never delegated)
 
 - user-facing engineering decisions
 - severity of an incident
@@ -48,6 +48,19 @@ It is a framework of Claude Code skills that turns Claude Opus into a senior eng
 
 Full spec: [docs/WORKFLOW.md](docs/WORKFLOW.md).
 
+## Orchestrators
+
+The installer supports six targets. Pick one at prompt `0` in `./setup.sh`.
+
+- **Claude Code** (default): writes `~/.claude/settings.json` (or `./.claude/settings.json` for per-project) with `SessionStart` + `UserPromptSubmit` hooks, and symlinks `skills/*` into `~/.claude/skills/`.
+- **Cursor**: writes `./.cursor/rules/let-there-be-light.mdc` with `alwaysApply: true`, and copies `skills/*` into `./.cursor/rules/let-there-be-light-skills/` so the model can read them.
+- **Cline**: writes `./.clinerules` (or `~/.clinerules` for global) with the routing doctrine, and copies `skills/*` into `./let-there-be-light-skills/`.
+- **Codex CLI**: writes `~/.codex/instructions.md` and copies `skills/*` into `~/.codex/let-there-be-light-skills/`.
+- **Aider**: writes `./.aider.let-there-be-light.md` (add to your `.aider.conf.yml` as `read: [./.aider.let-there-be-light.md]`) and copies `skills/*` into `./let-there-be-light-skills/`.
+- **Generic / other**: writes `./SYSTEM_PROMPT.let-there-be-light.md` you can paste into any tool's system prompt, with `skills/*` copied alongside.
+
+For non-Claude orchestrators the installer also appends an index of the shipped skills to the rules file so the model knows what SKILL.md files it can read when a trigger phrase appears (since only Claude Code has the `Skill()` primitive).
+
 ## Failover doctrine
 
 If any model refuses, times out, or errors, immediately re-route. Refusal is a routing problem, not a stop.
@@ -60,15 +73,15 @@ git clone https://github.com/crowx01/let-there-be-light && cd let-there-be-light
 ./setup.sh
 ```
 
-`setup.sh` walks you through scope (global vs per-project), which skills auto-load at session start, which PAL models you have keys for, symlinking the skills into `~/.claude/skills` or `./.claude/skills`, and a PAL registration sanity check. Any existing hooks from other frameworks are appended-to, never clobbered.
+`setup.sh` walks you through scope (global vs per-project), which skills auto-load at session start, which PAL models you have keys for, symlinking or copying the skills into the appropriate location, and a PAL registration sanity check. Any existing hooks from other frameworks are appended-to, never clobbered.
 
-See a full picture-book walkthrough of the wizard + what Claude sees: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (4 pages, dawn-palette / fire-palette rendering).
+See a full picture-book walkthrough of the wizard + what your orchestrator sees: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (4 pages, dawn-palette / fire-palette rendering).
 
-Prefer manual? Copy `settings.example.json` into `~/.claude/settings.json` and edit by hand.
+Prefer manual? See `settings.example.json` (Claude Code format) or any orchestrator-specific example under `docs/`.
 
 ## Sibling: sauron
 
-This repo is the sibling to [crowx01/sauron](https://github.com/crowx01/sauron), the offensive-security framework for bug-bounty and pentest work. Same underlying pattern (Claude Code + PAL delegate-first + interactive setup wizard); different skills.
+This repo is the sibling to [crowx01/sauron](https://github.com/crowx01/sauron), the offensive-security framework for bug-bounty and pentest work. Same underlying pattern (orchestrator + PAL delegate-first + interactive setup wizard); different skills.
 
 ## Attribution
 
