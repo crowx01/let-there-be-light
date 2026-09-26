@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# sauron - interactive setup.
+# let-there-be-light - interactive setup.
 # Lets you pick which PAL models to enable and whether the hooks install
 # globally (~/.claude/settings.json) or per-project (./.claude/settings.json).
 # Writes only what you approve. Backs up any existing settings first.
@@ -165,7 +165,7 @@ if [ -f "$TARGET" ]; then
     | .hooks.SessionStart     = (($orig.hooks.SessionStart     // []) + ($add.hooks.SessionStart     // []))
     | .hooks.UserPromptSubmit = (($orig.hooks.UserPromptSubmit // []) + ($add.hooks.UserPromptSubmit // []))
   ' "$TARGET" > "${TARGET}.tmp" && mv "${TARGET}.tmp" "$TARGET"
-  ok "merged into $TARGET (existing hooks preserved, sauron hooks appended)"
+  ok "merged into $TARGET (existing hooks preserved, let-there-be-light hooks appended)"
 else
   echo "$JSON" | jq . > "$TARGET"
   ok "wrote $TARGET"
@@ -218,9 +218,9 @@ NEEDS_ENV=0
 [ "$M_ORFR" = 1 ] && NEEDS_ENV=1
 [ "$M_PRO" = 1 ] && NEEDS_ENV=1
 if [ "$NEEDS_ENV" = 1 ]; then
-  ENV_PATH="$(dirname "$TARGET")/.env.sauron.example"
+  ENV_PATH="$(dirname "$TARGET")/.env.lttbl.example"
   cat > "$ENV_PATH" <<EOF
-# sauron API keys - source this from your shell rc, or export before starting Claude Code.
+# let-there-be-light API keys - source this from your shell rc, or export before starting Claude Code.
 # Do NOT commit the real values.
 $( [ "$M_FLSH" = 1 ] || [ "$M_PRO" = 1 ] && echo "export GEMINI_API_KEY=your-gemini-key" )
 $( [ "$M_NEMO" = 1 ] || [ "$M_GROK" = 1 ] || [ "$M_ORFR" = 1 ] && echo "export OPENROUTER_API_KEY=your-openrouter-key" )
@@ -234,9 +234,9 @@ hd "Next steps"
 cat <<EOF
   1. Register PAL as an MCP server in ~/.claude.json:
      ${DIM}"mcpServers": { "pal": { "type": "stdio", "command": "/path/to/zen-mcp-server/.pal_venv/bin/python", "args": ["/path/to/zen-mcp-server/server.py"], "env": { ...keys... } } }${RST}
-  2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.sauron.example${RST}   (after editing it)
+  2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.lttbl.example${RST}   (after editing it)
   3. Restart Claude Code.
   4. On the next session start you should see the auto-invoked skills fire immediately.
 
 EOF
-ok "sauron setup complete."
+ok "let-there-be-light setup complete."

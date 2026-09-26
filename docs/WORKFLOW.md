@@ -10,7 +10,7 @@ From cold repo to deployed service. Two invariants: (1) delegate the prose, neve
    - **Scope.** Global (`~/.claude/settings.json`) or per-project (`./.claude/settings.json`). Per-project is the default; keeps the framework from attaching to unrelated work.
    - **Auto-load skills.** Which skills fire at every session start (`architect`, `test-strategist`, `ship-checklist` are on by default; `incident-response` and `retrospective` are off unless you opt in).
    - **PAL models.** Pick which models you have keys for. Unselected models are dropped from the rendered hook so Claude never routes to them.
-4. Fill in your API keys in the generated `.env.sauron.example` and source it from your shell rc.
+4. Fill in your API keys in the generated `.env.lttbl.example` and source it from your shell rc.
 5. Symlink skills into the discoverable path (the wizard offers to do this automatically).
 6. Restart Claude Code.
 
