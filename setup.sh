@@ -83,6 +83,7 @@ prompt_yn () { local q="$1" d="$2" a; read -rp "  $q [Y/n]: " a; a="${a:-$d}"; c
 S_CAVE=$(prompt_yn  "caveman (compressed prose; keeps code, commands, evidence byte-exact)" y)
 S_ARCH=$(prompt_yn  "architect (design phase: system design + ADRs)" y)
 S_TEST=$(prompt_yn  "test-strategist (test pyramid + coverage plan)" y)
+S_CLEAN=$(prompt_yn "clean-code (keep code human-readable during implementation)" y)
 S_FIX=$(prompt_yn   "fix-validator (4-step pipeline for every code fix before merge/ship)" y)
 S_SHIP=$(prompt_yn  "ship-checklist (pre-deploy validation + rollback plan)" y)
 S_IR=$(prompt_yn    "incident-response (alert triage + runbook lookup)" n)
@@ -101,7 +102,8 @@ M_PRO=$(prompt_yn "pro (gemini-3-pro-preview) - adversarial debate" y)
 
 # guard: warn if user selected nothing (both no skills AND no models)
 if [ "$S_CAVE" = 0 ] && [ "$S_ARCH" = 0 ] && [ "$S_TEST" = 0 ] && \
-   [ "$S_FIX" = 0 ] && [ "$S_SHIP" = 0 ] && [ "$S_IR" = 0 ] && [ "$S_RETRO" = 0 ] && \
+   [ "$S_CLEAN" = 0 ] && [ "$S_FIX" = 0 ] && [ "$S_SHIP" = 0 ] && \
+   [ "$S_IR" = 0 ] && [ "$S_RETRO" = 0 ] && \
    [ "$M_GROQ" = 0 ] && [ "$M_NEMO" = 0 ] && [ "$M_GROK" = 0 ] && \
    [ "$M_FLSH" = 0 ] && [ "$M_ORFR" = 0 ] && [ "$M_PRO" = 0 ]; then
   warn "you selected no skills and no models; the hook would be inert."
@@ -124,6 +126,7 @@ SKILLS_LIST=""
 [ "$S_CAVE" = 1 ]  && SKILLS_LIST+="\`caveman\` (full mode), "
 [ "$S_ARCH" = 1 ]  && SKILLS_LIST+="\`architect\`, "
 [ "$S_TEST" = 1 ]  && SKILLS_LIST+="\`test-strategist\`, "
+[ "$S_CLEAN" = 1 ] && SKILLS_LIST+="\`clean-code\`, "
 [ "$S_FIX" = 1 ]   && SKILLS_LIST+="\`fix-validator\` (preload), "
 [ "$S_SHIP" = 1 ]  && SKILLS_LIST+="\`ship-checklist\`, "
 [ "$S_IR" = 1 ]    && SKILLS_LIST+="\`incident-response\`, "
@@ -385,7 +388,7 @@ if [ "$ORCH" != "c" ] && [ -d "$SKILLS_SRC" ]; then
   esac
 fi
 
-# ---------- 7. .env template for API keys ----------
+# ---------- 7. .env handling: template + optional interactive key entry ----------
 NEEDS_ENV=0
 [ "$M_GROQ" = 1 ] && NEEDS_ENV=1
 [ "$M_NEMO" = 1 ] && NEEDS_ENV=1
@@ -393,16 +396,96 @@ NEEDS_ENV=0
 [ "$M_FLSH" = 1 ] && NEEDS_ENV=1
 [ "$M_ORFR" = 1 ] && NEEDS_ENV=1
 [ "$M_PRO" = 1 ] && NEEDS_ENV=1
+
 if [ "$NEEDS_ENV" = 1 ]; then
-  ENV_PATH="$(dirname "$TARGET")/.env.lttbl.example"
-  cat > "$ENV_PATH" <<EOF
+  ENV_EXAMPLE="$(dirname "$TARGET")/.env.lttbl.example"
+  ENV_REAL="$(dirname "$TARGET")/.env.lttbl"
+
+  # always write the placeholder example (unquoted heredoc so $( ) expands)
+  cat > "$ENV_EXAMPLE" <<EOF
 # let-there-be-light API keys - source this from your shell rc, or export before starting Claude Code.
 # Do NOT commit the real values.
 $( [ "$M_FLSH" = 1 ] || [ "$M_PRO" = 1 ] && echo "export GEMINI_API_KEY=your-gemini-key" )
 $( [ "$M_NEMO" = 1 ] || [ "$M_GROK" = 1 ] || [ "$M_ORFR" = 1 ] && echo "export OPENROUTER_API_KEY=your-openrouter-key" )
 $( [ "$M_GROQ" = 1 ] && printf '%s\n' "export CUSTOM_API_URL=https://api.groq.com/openai/v1" "export CUSTOM_API_KEY=your-groq-key" )
 EOF
-  ok "wrote env template: $ENV_PATH"
+  ok "wrote env template: $ENV_EXAMPLE"
+
+  # interactive key entry (per-provider instructions, silent read)
+  hd "7. Enter API keys now to complete installation?"
+  say "  You can skip and edit $(basename "$ENV_EXAMPLE") later, or enter them now"
+  say "  to have a real .env.lttbl written with 0600 permissions."
+  ASK_KEYS=$(prompt_yn "enter API keys now?" y)
+
+  GROQ_KEY=""; OR_KEY=""; GEMINI_KEY=""
+
+  if [ "$ASK_KEYS" = 1 ]; then
+    # -- Groq (M_GROQ)
+    if [ "$M_GROQ" = 1 ]; then
+      hd "  ${GLD}Groq${RST} (report writing, validation)"
+      say "    ${DIM}How to get one:${RST}"
+      say "      1. Open ${CYN}https://console.groq.com/keys${RST}"
+      say "      2. Sign in with Google or GitHub"
+      say "      3. Click 'Create API Key', name it 'let-there-be-light'"
+      say "      4. Copy the key (starts with 'gsk_')"
+      say "    ${DIM}Free tier: gpt-oss-120b with ~500 rpm.${RST}"
+      read -rsp "    paste Groq key (input hidden, ENTER to skip): " GROQ_KEY; echo
+      GROQ_KEY=$(printf '%s' "$GROQ_KEY" | tr -d '[:space:]')
+    fi
+    # -- OpenRouter (any of M_NEMO / M_GROK / M_ORFR)
+    if [ "$M_NEMO" = 1 ] || [ "$M_GROK" = 1 ] || [ "$M_ORFR" = 1 ]; then
+      hd "  ${GLD}OpenRouter${RST} (nemotron / grok / or-free share this key)"
+      say "    ${DIM}How to get one:${RST}"
+      say "      1. Open ${CYN}https://openrouter.ai/settings/keys${RST}"
+      say "      2. Sign in with Google or GitHub"
+      say "      3. Click 'Create Key', name it 'let-there-be-light'"
+      say "      4. Copy the key (starts with 'sk-or-v1-')"
+      say "    ${DIM}Free-tier models (nemotron, grok-fast, meta-router) don't require credit.${RST}"
+      read -rsp "    paste OpenRouter key (input hidden, ENTER to skip): " OR_KEY; echo
+      OR_KEY=$(printf '%s' "$OR_KEY" | tr -d '[:space:]')
+    fi
+    # -- Google Gemini (M_FLSH or M_PRO)
+    if [ "$M_FLSH" = 1 ] || [ "$M_PRO" = 1 ]; then
+      hd "  ${GLD}Google Gemini${RST} (flash / pro share this key)"
+      say "    ${DIM}How to get one:${RST}"
+      say "      1. Open ${CYN}https://aistudio.google.com/apikey${RST}"
+      say "      2. Sign in with Google"
+      say "      3. Click 'Create API Key' in a new or existing Google Cloud project"
+      say "      4. Copy the key"
+      say "    ${DIM}Free tier: generous flash/pro quotas.${RST}"
+      read -rsp "    paste Gemini key (input hidden, ENTER to skip): " GEMINI_KEY; echo
+      GEMINI_KEY=$(printf '%s' "$GEMINI_KEY" | tr -d '[:space:]')
+    fi
+
+    # write real .env.lttbl with 0600 perms
+    umask_prev=$(umask); umask 077
+    {
+      [ "$M_FLSH" = 1 ] || [ "$M_PRO" = 1 ] && printf 'export GEMINI_API_KEY=%s\n'    "${GEMINI_KEY:-your-gemini-key}"
+      [ "$M_NEMO" = 1 ] || [ "$M_GROK" = 1 ] || [ "$M_ORFR" = 1 ] && printf 'export OPENROUTER_API_KEY=%s\n' "${OR_KEY:-your-openrouter-key}"
+      if [ "$M_GROQ" = 1 ]; then
+        printf 'export CUSTOM_API_URL=https://api.groq.com/openai/v1\n'
+        printf 'export CUSTOM_API_KEY=%s\n' "${GROQ_KEY:-your-groq-key}"
+      fi
+    } > "$ENV_REAL"
+    chmod 600 "$ENV_REAL"
+    umask "$umask_prev"
+    ok "wrote $ENV_REAL (0600)"
+
+    # summary of what was captured
+    hd "7b. Key entry summary"
+    if [ "$M_GROQ" = 1 ]; then
+      [ -n "$GROQ_KEY"   ] && ok "  Groq       entered" || warn "  Groq       placeholder (edit $ENV_REAL to add it)"
+    fi
+    if [ "$M_NEMO" = 1 ] || [ "$M_GROK" = 1 ] || [ "$M_ORFR" = 1 ]; then
+      [ -n "$OR_KEY"     ] && ok "  OpenRouter entered" || warn "  OpenRouter placeholder (edit $ENV_REAL to add it)"
+    fi
+    if [ "$M_FLSH" = 1 ] || [ "$M_PRO" = 1 ]; then
+      [ -n "$GEMINI_KEY" ] && ok "  Gemini     entered" || warn "  Gemini     placeholder (edit $ENV_REAL to add it)"
+    fi
+  else
+    say "  skipped interactive key entry; only the example was written."
+    warn "  edit $ENV_EXAMPLE and rename to .env.lttbl before starting your orchestrator."
+  fi
 fi
 
 # ---------- 8. next steps ----------
@@ -412,14 +495,15 @@ case "$ORCH" in
     cat <<EOF
   1. Register PAL as an MCP server in ~/.claude.json:
      ${DIM}"mcpServers": { "pal": { "type": "stdio", "command": "/path/to/zen-mcp-server/.pal_venv/bin/python", "args": ["/path/to/zen-mcp-server/server.py"], "env": { ...keys... } } }${RST}
-  2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.lttbl.example${RST}   (after editing it)
+  2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.lttbl${RST}
+     ${DIM}(falls back to .env.lttbl.example if you skipped interactive entry)${RST}
   3. Restart Claude Code.
   4. On the next session start you should see the auto-invoked skills fire immediately.
 EOF
     ;;
   r)
     cat <<EOF
-  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.lttbl.example
+  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.lttbl
   2. Open your project in Cursor.
   3. Rules in .cursor/rules/*.mdc are applied automatically (alwaysApply:true).
   4. The other model (not Claude) has no Skill() primitive; ask it to read
@@ -428,7 +512,7 @@ EOF
     ;;
   l)
     cat <<EOF
-  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.lttbl.example
+  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.lttbl
   2. Open your project in the VS Code extension for Cline.
   3. Cline reads .clinerules automatically as system prompt.
   4. Ask Cline to read let-there-be-light-skills/<name>/SKILL.md when triggers appear.

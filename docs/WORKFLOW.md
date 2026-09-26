@@ -42,7 +42,7 @@ Each phase has its own skill and its own delegation pattern.
 `architect` runs. Produces a system diagram, an ADR, a trade-off matrix, and an explicit list of unknowns. Debate happens with `pro`. Final recommendation stays in Claude.
 
 ### Phase 2. Implementation
-`test-strategist` runs alongside coding. Produces a test-pyramid split, coverage targets for the changed lines, fixture strategy, and an explicit list of what is not tested. When the PR opens, `debate-review` runs a two-model debate and posts a single review from your `gh` / `glab` / `az` account. `babysit-pr` then works the rounds until merge-ready.
+`clean-code` runs alongside coding to keep names, structure, and comments human-readable (one-job functions, WHY-not-WHAT comments, three-levels-deep-max nesting, types at the seams). `test-strategist` runs in parallel: test-pyramid split, coverage targets for the changed lines, fixture strategy, and an explicit list of what is not tested. When the PR opens, `debate-review` runs a two-model debate and posts a single review from your `gh` / `glab` / `az` account. `babysit-pr` then works the rounds until merge-ready.
 
 ### Phase 3. Staging
 `ship-checklist` runs before promotion. Produces an ordered pre-deploy checklist, a rollback plan with expected time and blast radius, and a 5-10 step smoke test. Rollback plan is non-negotiable.
@@ -72,7 +72,7 @@ Rule: A fix without a test that would have caught the original bug is a bet, not
 | every prompt | delegate-first + failover re-asserted | UserPromptSubmit hook |
 | any bulk read/write | routed to a PAL model per task type | pal-router skill |
 | any design | ADR + trade-off matrix + unknowns | architect skill |
-| any code change | test plan + PR debate + babysit | test-strategist, debate-review, babysit-pr |
+| any code change | readability rules + test plan + PR debate + babysit | clean-code, test-strategist, debate-review, babysit-pr |
 | any release | pre-deploy checklist + rollback + smoke | ship-checklist skill |
 | any code fix before merge | 4-step fix-validation pipeline | fix-validator skill |
 | any incident | triage + blast radius + status update | incident-response skill |
