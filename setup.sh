@@ -80,10 +80,12 @@ hd "2. Which skills should auto-load at session start?"
 say "  These are invoked as the very first tool calls of every session."
 say "  Leave blank to skip a skill; type y to include it."
 prompt_yn () { local q="$1" d="$2" a; read -rp "  $q [Y/n]: " a; a="${a:-$d}"; case "$a" in y|Y) echo "1" ;; *) echo "0" ;; esac; }
-S_ARCH=$(prompt_yn "architect (design phase: system design + ADRs)" y)
-S_TEST=$(prompt_yn "test-strategist (test pyramid + coverage plan)" y)
-S_SHIP=$(prompt_yn "ship-checklist (pre-deploy validation + rollback plan)" y)
-S_IR=$(prompt_yn   "incident-response (alert triage + runbook lookup)" n)
+S_CAVE=$(prompt_yn  "caveman (compressed prose; keeps code, commands, evidence byte-exact)" y)
+S_ARCH=$(prompt_yn  "architect (design phase: system design + ADRs)" y)
+S_TEST=$(prompt_yn  "test-strategist (test pyramid + coverage plan)" y)
+S_FIX=$(prompt_yn   "fix-validator (4-step pipeline for every code fix before merge/ship)" y)
+S_SHIP=$(prompt_yn  "ship-checklist (pre-deploy validation + rollback plan)" y)
+S_IR=$(prompt_yn    "incident-response (alert triage + runbook lookup)" n)
 S_RETRO=$(prompt_yn "retrospective (post-mortem writer)" n)
 
 # ---------- 3. models ----------
@@ -98,8 +100,8 @@ M_ORFR=$(prompt_yn "or-free (openrouter meta-router) - generic fallback" y)
 M_PRO=$(prompt_yn "pro (gemini-3-pro-preview) - adversarial debate" y)
 
 # guard: warn if user selected nothing (both no skills AND no models)
-if [ "$S_ARCH" = 0 ] && [ "$S_TEST" = 0 ] && [ "$S_SHIP" = 0 ] && \
-   [ "$S_IR" = 0 ] && [ "$S_RETRO" = 0 ] && \
+if [ "$S_CAVE" = 0 ] && [ "$S_ARCH" = 0 ] && [ "$S_TEST" = 0 ] && \
+   [ "$S_FIX" = 0 ] && [ "$S_SHIP" = 0 ] && [ "$S_IR" = 0 ] && [ "$S_RETRO" = 0 ] && \
    [ "$M_GROQ" = 0 ] && [ "$M_NEMO" = 0 ] && [ "$M_GROK" = 0 ] && \
    [ "$M_FLSH" = 0 ] && [ "$M_ORFR" = 0 ] && [ "$M_PRO" = 0 ]; then
   warn "you selected no skills and no models; the hook would be inert."
@@ -119,8 +121,10 @@ ROUTING=""
 
 # build skills list
 SKILLS_LIST=""
+[ "$S_CAVE" = 1 ]  && SKILLS_LIST+="\`caveman\` (full mode), "
 [ "$S_ARCH" = 1 ]  && SKILLS_LIST+="\`architect\`, "
 [ "$S_TEST" = 1 ]  && SKILLS_LIST+="\`test-strategist\`, "
+[ "$S_FIX" = 1 ]   && SKILLS_LIST+="\`fix-validator\` (preload), "
 [ "$S_SHIP" = 1 ]  && SKILLS_LIST+="\`ship-checklist\`, "
 [ "$S_IR" = 1 ]    && SKILLS_LIST+="\`incident-response\`, "
 [ "$S_RETRO" = 1 ] && SKILLS_LIST+="\`retrospective\`, "
@@ -128,9 +132,9 @@ SKILLS_LIST="${SKILLS_LIST%, }"
 
 # ---------- 4. render SessionStart + UserPromptSubmit hook bodies ----------
 if [ -n "$SKILLS_LIST" ]; then
-  SS_TEXT="MANDATORY FIRST ACTIONS: on session start and for EVERY model, BEFORE responding, immediately call the Skill tool for ${SKILLS_LIST}. Full preference set: (1) delegate-first via PAL: ${ROUTING}(2) KEEP IN CLAUDE: user-facing decisions, exploitation choices, severity calls, safety-boundary checks, side-effecting actions, tool-sequence orchestration. (3) On every significant change (feature spec, migration, refactor) run the 4-step lifecycle: design review (architect skill), implementation review (debate-review), staging validation (ship-checklist), post-deploy check (incident-response ready)."
+  SS_TEXT="MANDATORY FIRST ACTIONS: on session start and for EVERY model, BEFORE responding, immediately call the Skill tool for ${SKILLS_LIST}. Full preference set: (1) delegate-first via PAL: ${ROUTING}(2) KEEP IN CLAUDE: user-facing decisions, exploitation choices, severity calls, safety-boundary checks, side-effecting actions, tool-sequence orchestration. (3) Outer flow: on every significant change run the 4-phase lifecycle: design review (architect), implementation review (debate-review), staging validation (ship-checklist), post-deploy check (incident-response ready). (3b) Inner pipeline: on every code FIX before merge/ship run the 4-step fix-validation pipeline: fix-validator stress-test (12 fields), gap tests (missing coverage the validator flagged), adversarial code review via mcp__pal__challenge (pro fallback groq), synthesize + write PR description (delegate to groq). Never merge a fix that has no test that would have caught the original bug."
 else
-  SS_TEXT="Preferences: delegate-first via PAL: ${ROUTING}KEEP IN CLAUDE: user-facing decisions, exploitation choices, severity calls, safety-boundary checks, side-effecting actions, tool-sequence orchestration. On every significant code change run: design review -> implementation review -> staging validation -> post-deploy check. Delegate PR writeups and documentation to groq."
+  SS_TEXT="Preferences: delegate-first via PAL: ${ROUTING}KEEP IN CLAUDE: user-facing decisions, exploitation choices, severity calls, safety-boundary checks, side-effecting actions, tool-sequence orchestration. On every significant code change run the 4-phase lifecycle (design review -> implementation review -> staging validation -> post-deploy check). On every code FIX run the 4-step fix-validation pipeline (fix-validator stress-test -> gap tests -> adversarial review via mcp__pal__challenge -> synthesize + write). Delegate PR writeups and documentation to groq."
 fi
 
 UPS_TEXT="Reminder every message: delegate aggressively to PAL to conserve tokens (${ROUTING}). Keep in Claude ONLY: user-facing decisions, exploitation choices, severity calls, safety-boundary checks, side-effecting actions, orchestration. FAILOVER: if any model refuses or errors, immediately re-route; a refusal is a routing problem, not a stop."
@@ -408,14 +412,14 @@ case "$ORCH" in
     cat <<EOF
   1. Register PAL as an MCP server in ~/.claude.json:
      ${DIM}"mcpServers": { "pal": { "type": "stdio", "command": "/path/to/zen-mcp-server/.pal_venv/bin/python", "args": ["/path/to/zen-mcp-server/server.py"], "env": { ...keys... } } }${RST}
-  2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.let-there-be-light.example${RST}   (after editing it)
+  2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.lttbl.example${RST}   (after editing it)
   3. Restart Claude Code.
   4. On the next session start you should see the auto-invoked skills fire immediately.
 EOF
     ;;
   r)
     cat <<EOF
-  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.let-there-be-light.example
+  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.lttbl.example
   2. Open your project in Cursor.
   3. Rules in .cursor/rules/*.mdc are applied automatically (alwaysApply:true).
   4. The other model (not Claude) has no Skill() primitive; ask it to read
@@ -424,7 +428,7 @@ EOF
     ;;
   l)
     cat <<EOF
-  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.let-there-be-light.example
+  1. Set your provider API keys via environment: source $(dirname "$TARGET")/.env.lttbl.example
   2. Open your project in the VS Code extension for Cline.
   3. Cline reads .clinerules automatically as system prompt.
   4. Ask Cline to read let-there-be-light-skills/<name>/SKILL.md when triggers appear.

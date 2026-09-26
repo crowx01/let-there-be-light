@@ -14,6 +14,7 @@ It is a framework of skills that turns your AI orchestrator into a senior engine
 |-------|-----|--------|
 | [architect](skills/architect/SKILL.md) | Design phase: system design, ADRs, tech-stack choices. | mine |
 | [test-strategist](skills/test-strategist/SKILL.md) | Implementation: test pyramid, coverage plan, fixture strategy. | mine |
+| [fix-validator](skills/fix-validator/SKILL.md) | Runs the 4-step fix-validation pipeline before any code fix merges or ships. | mine |
 | [ship-checklist](skills/ship-checklist/SKILL.md) | Staging: pre-deploy checklist, rollback plan, smoke tests. | mine |
 | [incident-response](skills/incident-response/SKILL.md) | Production: alert triage, blast radius, status update. | mine |
 | [retrospective](skills/retrospective/SKILL.md) | Post-incident: timeline, blameless post-mortem, action items. | mine |
@@ -47,6 +48,17 @@ It is a framework of skills that turns your AI orchestrator into a senior engine
 4. **Production:** incident-response ready; retrospective for anything customer-visible.
 
 Full spec: [docs/WORKFLOW.md](docs/WORKFLOW.md).
+
+### The 4-step fix-validation pipeline (inner loop)
+
+Every code fix runs through a fixed 4-step pipeline before it merges or ships, mirroring the sauron `validator` pattern but for software fixes rather than vulnerabilities:
+
+1. **Stress-test** the fix with `fix-validator`: 12 fields including Root Cause Confidence, Regression Risk, Blast Radius, Test Coverage, Missing Tests, Rollback Complexity, Side Effects, Security Impact, Performance Impact, Backwards Compatibility, Deployment Risk, Final Verdict.
+2. **Gap tests** for every missing test the validator flagged (unit, contract, integration, mutation).
+3. **Adversarial code review** via `mcp__pal__challenge` (pro primary, groq fallback). Attacks the fix from correctness, layering, rollback, backwards compat, and 10x-traffic angles.
+4. **Synthesize + write** the PR description (delegated to groq); human byte-checks file paths, function signatures, migration steps against the raw diff before merge.
+
+Full spec: [skills/fix-validator/SKILL.md](skills/fix-validator/SKILL.md).
 
 ## Orchestrators
 
