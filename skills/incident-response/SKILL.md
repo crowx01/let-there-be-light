@@ -1,3 +1,11 @@
+---
+name: incident-response
+description: >-
+  Production skill: triages the alert, finds the right runbook, and calculates blast radius so you
+  can decide fast. Triggers on: 'incident', 'outage', 'pages are firing', 'who owns X', active
+  production alert, customer-reported outage, error-rate or latency anomaly.
+---
+
 # incident-response
 
 **One-line pitch:** Production skill: triages the alert, finds the right runbook, and calculates blast radius so you can decide fast.

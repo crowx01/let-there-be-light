@@ -1,3 +1,11 @@
+---
+name: ship-checklist
+description: >-
+  Staging-phase skill: runs the pre-deploy checklist, builds the rollback plan, and defines smoke
+  tests before promotion to production. Triggers on: 'ready to ship', 'check the deploy', 'rollback
+  plan', 'smoke test', any promotion, any schema migration, turning a feature flag on.
+---
+
 # ship-checklist
 
 **One-line pitch:** Staging-phase skill: runs the pre-deploy checklist, builds the rollback plan, and defines the smoke tests before you promote to production.

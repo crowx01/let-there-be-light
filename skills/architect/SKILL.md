@@ -1,3 +1,12 @@
+---
+name: architect
+description: >-
+  Design-phase skill: turns product ideas into system designs, ADRs, and tech-stack decisions
+  before a line of code ships. Triggers on: 'design this', 'should we use X', 'write an ADR', 'what
+  is the architecture', new feature spanning multiple services, tech choice, migration touching
+  data flow or auth boundaries.
+---
+
 # architect
 
 **One-line pitch:** Design-phase skill: turns product ideas into system designs, ADRs, and tech-stack decisions before a line of code ships.

@@ -1,3 +1,12 @@
+---
+name: retrospective
+description: >-
+  Post-incident skill: builds the timeline, drafts the blameless post-mortem, and generates
+  concrete action items that survive triage. Triggers on: 'post-mortem', 'retro', 'what went
+  wrong', 'action items', after any customer-visible incident, after a near-miss, after a recurring
+  bug.
+---
+
 # retrospective
 
 **One-line pitch:** Post-incident skill: builds the timeline, drafts the blameless post-mortem, and generates concrete action items that survive triage.

@@ -1,3 +1,11 @@
+---
+name: test-strategist
+description: >-
+  Implementation-phase skill: designs the test pyramid, coverage plan, and fixture strategy for a
+  change. Triggers on: 'what tests do I need', 'test this', 'how do I test X', 'CI is flaky', a bug
+  that should have been caught, before writing tests for a new feature.
+---
+
 # test-strategist
 
 **One-line pitch:** Implementation-phase skill: designs the test pyramid, coverage plan, and fixture strategy so the codebase stays honest.
