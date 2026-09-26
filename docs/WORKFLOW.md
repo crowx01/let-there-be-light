@@ -50,6 +50,20 @@ Each phase has its own skill and its own delegation pattern.
 ### Phase 4. Production
 `incident-response` runs on every alert. Produces blast radius, runbook link, ordered triage steps, and draft status updates. `retrospective` runs after anything customer-visible: builds the timeline in UTC, drafts the blameless narrative, categorizes contributing factors, and produces at most 5 action items with owners and deadlines.
 
+## 4.5 The 4-step fix-validation pipeline (per code fix)
+
+Runs on every bug fix, hotfix, or refactor that claims to fix an issue. Mirrors the sauron `validator` pattern but for software fixes.
+
+**A. Stress-test.** `Skill(fix-validator)` produces twelve fields: Root Cause Confidence, Regression Risk, Blast Radius, Test Coverage, Missing Tests, Rollback Complexity, Side Effects, Security Impact, Performance Impact, Backwards Compatibility, Deployment Risk, Final Verdict.
+
+**B. Gap tests.** Run every missing test, negative control, and edge case the validator flagged. Use your dev tools: test suite, linter, type checker, coverage tool, mutation testing, contract tests.
+
+**C. Adversarial code review.** `mcp__pal__challenge` with `pro` primary, `groq` fallback. Attacks the fix on correctness under edge cases, right-layer-to-fix, test completeness, rollback plan, backwards compat, and 10x-traffic behavior.
+
+**D. Synthesize and write.** Combine validator output + gap-closing tests + debate transcript into the final assessment. Groq drafts the PR description; you byte-check file paths, function signatures, migration steps against the raw diff before merging or shipping.
+
+Rule: A fix without a test that would have caught the original bug is a bet, not a fix.
+
 ## 5. Quick reference: what fires when
 
 | Event | What runs | Where it lives |
@@ -60,6 +74,7 @@ Each phase has its own skill and its own delegation pattern.
 | any design | ADR + trade-off matrix + unknowns | architect skill |
 | any code change | test plan + PR debate + babysit | test-strategist, debate-review, babysit-pr |
 | any release | pre-deploy checklist + rollback + smoke | ship-checklist skill |
+| any code fix before merge | 4-step fix-validation pipeline | fix-validator skill |
 | any incident | triage + blast radius + status update | incident-response skill |
 | any post-mortem | timeline + narrative + action items | retrospective skill |
 
