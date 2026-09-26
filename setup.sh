@@ -327,6 +327,39 @@ if [ -n "$CLAUDE_MD" ]; then
     cp "$CLAUDE_MD" "${CLAUDE_MD}.bak.$(date +%s)"
     ok "backed up existing CLAUDE.md"
   fi
+  # NEW-6: multi-framework detection. If a sibling framework block (sauron) is
+  # already present, write a lean block that references it instead of duplicating
+  # the shared "Delegate-first routing / Keep in Claude / Failover / Token rules"
+  # sections. Only framework-specific sections stay in this block.
+  SIBLING_PRESENT=0
+  if [ -f "$CLAUDE_MD" ] && grep -q '<!-- BEGIN sauron doctrine' "$CLAUDE_MD"; then
+    SIBLING_PRESENT=1
+    ok "detected sibling doctrine (sauron); writing lean lttbl block"
+  fi
+if [ "$SIBLING_PRESENT" = 1 ]; then
+  DOC_BLOCK=$(cat <<CLAUDEMD
+
+<!-- BEGIN let-there-be-light doctrine (managed by setup.sh; sibling: sauron) -->
+# let-there-be-light doctrine (lean; shared rules provided by sibling block)
+
+Sibling framework \`sauron\` supplies: delegate-first routing, keep-in-Claude list, failover doctrine, token-efficiency rules, response terseness ladder, preempt-shell-bloat rules, failure-map, and route-plan pre-flight. Those apply here too.
+
+## 4-step validation pipeline (lttbl variant: per code fix before ship)
+A. Stress-test via fix-validator skill.
+B. Run the gap tests the validator flags.
+C. Adversarial challenge via mcp__pal__challenge (pro primary, groq fallback).
+D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low-confidence claims only.
+
+## Code-work strategy (diff-first)
+- For any "review this commit", "what changed", "audit this diff" request, run \`git diff <base>..HEAD\` first and reason from the diff.
+- Read a full file only when the diff is insufficient.
+
+## Preloaded skills
+${SKILLS_LIST:-(none preloaded; all skills lazy-load on trigger phrase)}
+<!-- END let-there-be-light doctrine -->
+CLAUDEMD
+)
+else
   DOC_BLOCK=$(cat <<CLAUDEMD
 
 <!-- BEGIN let-there-be-light doctrine (managed by setup.sh; regenerate to update) -->
@@ -360,12 +393,41 @@ D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low
 - Never delegate the same task twice; cache the result inline in the conversation.
 - Terser confirmations when a diff or file speaks for itself; not every action needs a paragraph.
 
+## Response terseness ladder
+- Level 1 (one-liner): use when a diff, SHA, file identifier, or one measurable result is the answer.
+- Level 2 (short paragraph): use for 1-2 non-obvious decisions or a short summary of a multi-step task.
+- Level 3 (detailed section): only for architecture design, security findings, or an explicit user request for detail.
+- Rule: never default to Level 3. The user asks for it. Under-explaining is cheaper to fix than over-explaining.
+
+## Code-work strategy (diff-first)
+- For any "review this commit", "what changed", "audit this diff", or "why does X do Y" request, run \`git diff <base>..HEAD\` (or \`git log -p\`) first and reason from the diff.
+- Read a full file only when the diff is insufficient to judge.
+- On refactors touching N files, this saves N full-file reads.
+
+## Preempt predictable bloat at the shell
+- If you already know a tool will emit over 5 KB, cap it in the shell rather than reading + then compressing.
+- Examples:
+  - \`nuclei ... | jq -c '.[]' | head -100\`
+  - \`docker logs -n 100 | head -c 5000\`
+  - \`npm install 2>&1 | tail -20\`
+  - \`find . -name '*.log' -exec wc -l {} + | sort -n | tail\`
+
+## In-conversation failure-map
+- On any PAL refusal or 4xx/5xx response, tag \"\$model refused \$task-class this session\".
+- Skip that model for the next similar task in the same conversation. Do not retry the failing route inside one turn.
+
+## Route-plan pre-flight (speculative, measure before generalizing)
+- For any task with 3 or more distinct sub-steps, first fire a small groq call (~200 tokens) asking for a routing plan (which sub-task goes to which PAL model).
+- Then execute the plan.
+- If the plan overhead exceeds the saving on tasks under 5 sub-steps, drop this rule.
+
 ## Preloaded skills
 ${SKILLS_LIST:-(none preloaded; all skills lazy-load on trigger phrase)}
 Other skill bodies load only when their trigger phrase appears.
 <!-- END let-there-be-light doctrine -->
 CLAUDEMD
 )
+fi
   # Remove any prior managed block, then append fresh (idempotent).
   if [ -f "$CLAUDE_MD" ]; then
     awk '
@@ -377,6 +439,15 @@ CLAUDEMD
   fi
   printf '%s\n' "$DOC_BLOCK" >> "$CLAUDE_MD"
   ok "wrote CLAUDE.md doctrine: $CLAUDE_MD"
+
+  # NEW-7 (LazyDoc): warn if CLAUDE.md exceeds 5 KB; suggest compression pass.
+  CLAUDE_MD_SIZE=$(wc -c < "$CLAUDE_MD")
+  if [ "$CLAUDE_MD_SIZE" -gt 5120 ]; then
+    warn "CLAUDE.md is ${CLAUDE_MD_SIZE} bytes (over 5 KB threshold)."
+    warn "  Every session loads this file. Consider compressing via PAL caveman mode:"
+    warn "    Skill(caveman) then ask groq to compress the managed blocks."
+    warn "  Or manually trim: your appended blocks are marked by <!-- BEGIN ... -->."
+  fi
 fi
 
 # ---------- 6b. optional: symlink shipped skills so Claude Code can discover them ----------
