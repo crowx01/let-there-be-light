@@ -70,7 +70,7 @@ Rule: A fix without a test that would have caught the original bug is a bet, not
 |---|---|---|
 | session start | enabled skills auto-invoke | SessionStart hook |
 | every prompt | delegate-first + failover re-asserted | UserPromptSubmit hook |
-| any bulk read/write | routed to a Hermes model per task type | pal-router skill |
+| any bulk read/write | routed to a Hermes model per task type | hermes-router skill |
 | any design | ADR + trade-off matrix + unknowns | architect skill |
 | any code change | readability rules + test plan + PR debate + babysit | clean-code, test-strategist, debate-review, babysit-pr |
 | any release | pre-deploy checklist + rollback + smoke | ship-checklist skill |

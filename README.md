@@ -18,7 +18,7 @@ It is a framework of skills that turns your AI orchestrator into a senior engine
 | [ship-checklist](skills/ship-checklist/SKILL.md) | Staging: pre-deploy checklist, rollback plan, smoke tests. | mine |
 | [incident-response](skills/incident-response/SKILL.md) | Production: alert triage, blast radius, status update. | mine |
 | [retrospective](skills/retrospective/SKILL.md) | Post-incident: timeline, blameless post-mortem, action items. | mine |
-| [pal-router](skills/pal-router/SKILL.md) | Delegate-first + failover routing doctrine. | mine |
+| [hermes-router](skills/hermes-router/SKILL.md) | Delegate-first + failover routing doctrine. | mine |
 | [debate-review](skills/debate-review/SKILL.md) | Two-model PR debate, posts one review from your gh/glab/az. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 | [babysit-pr](skills/babysit-pr/SKILL.md) | PR review rounds automation: verify, fix, reply, resolve, re-run. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 

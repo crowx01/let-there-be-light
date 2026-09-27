@@ -1,5 +1,5 @@
 ---
-name: pal-router
+name: hermes-router
 description: >-
   Delegate-first + failover doctrine for the framework. Dispatches sub-tasks to cheaper or free PAL
   models so Claude Opus's context stays reserved for judgment. Triggers on: 'route this to a
@@ -7,7 +7,7 @@ description: >-
   X', 'gemini refused, what now'.
 ---
 
-# pal-router
+# hermes-router
 
 **One-line pitch:** Delegate-first + failover doctrine for the let-there-be-light framework. Dispatches sub-tasks to cheaper or free PAL models so Claude Opus's context stays reserved for engineering judgment.
 
@@ -61,7 +61,7 @@ Preferred order per common task:
 - **Rule 11 (route-plan pre-flight, speculative):** for tasks with 3 or more distinct sub-steps, issue a small groq call (~200 tokens) FIRST asking for a routing plan; then execute. Measure impact; drop if overhead exceeds savings on tasks under 5 sub-steps.
 
 ## Auto-detect delegation triggers
-Auto-invoke pal-router BEFORE reading when you see:
+Auto-invoke hermes-router BEFORE reading when you see:
 - A file open > 5 KB (`Read` with no `limit` on a large file)
 - Any WebFetch call
 - Bash output over 100 lines
