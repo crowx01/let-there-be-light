@@ -47,7 +47,7 @@ Invoke this skill against the proposed fix. Produce twelve fields:
 Run every missing test, negative control, and edge case the validator flagged. Use your own dev tools: test suite, linter, type checker, coverage tool, mutation testing, contract tests. No shortcuts.
 
 ### Step C. Adversarial code review
-Route the fix to `mcp__pal__challenge` with Gemini 3 Pro as primary and Groq as fallback. Frame the debate adversarially:
+Route the fix to `mcp__hermes__challenge` with Gemini 3 Pro as primary and Groq as fallback. Frame the debate adversarially:
 
 - Attack the fix's correctness under edge cases.
 - Challenge whether this is the right layer to fix (band-aid on symptom vs true root cause).
