@@ -6,6 +6,7 @@
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BIN_DIR="$SCRIPT_DIR/bin"   # deterministic pre-filters; referenced by absolute path so they resolve from any project
 
 # ---------- pretty print ----------
 BOLD=$'\033[1m'; DIM=$'\033[2m'; RED=$'\033[31m'; GRN=$'\033[32m'; YLW=$'\033[33m'; CYN=$'\033[36m'; RST=$'\033[0m'
@@ -143,7 +144,7 @@ else
   SS_TEXT="Doctrine + routing map are in CLAUDE.md at the project root (already loaded)."
 fi
 
-UPS_TEXT="Every message: DEFAULT TO PAL for each task (bulk read to nemotron, write/validate to groq, structured to flash per CLAUDE.md routing); read source via bin/code-skeleton first, pipe build/test output through bin/strip-noise; keep only decisions/severity/safety/side-effects in Claude; failover on refusal, never stop."
+UPS_TEXT="Every message: DEFAULT TO PAL for each task (bulk read to nemotron, write/validate to groq, structured to flash per CLAUDE.md routing); read source via $BIN_DIR/code-skeleton first, pipe build/test output through $BIN_DIR/strip-noise; keep only decisions/severity/safety/side-effects in Claude; failover on refusal, never stop."
 
 # ---------- 5. build settings.json ----------
 # Each hook fires: printf '%s\n' '<inline JSON with additionalContext>'
@@ -386,7 +387,7 @@ C. Adversarial challenge via mcp__pal__challenge (pro primary, groq fallback).
 D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low-confidence claims only.
 
 ## Token efficiency rules (this framework exists to cut Claude token cost)
-- Read source with bin/code-skeleton (symbols + line numbers) before loading whole files; Read only the ranges you need. Pipe noisy build/test output through bin/strip-noise. Both are 0-token, deterministic.
+- Read source with $BIN_DIR/code-skeleton (symbols + line numbers) before loading whole files; Read only the ranges you need. Pipe noisy build/test output through $BIN_DIR/strip-noise. Both are 0-token, deterministic.
 - Any tool output over 5 KB routes through nemotron (bulk) or flash (structured) for summarization before Claude reads.
 - Batch related PAL sub-tasks into one structured call, not N separate ones.
 - PAL responses on factual output must include {claim, confidence, source_span} triples. Claude byte-checks entries below high confidence only.
