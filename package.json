@@ -1,0 +1,31 @@
+{
+  "name": "let-there-be-light",
+  "version": "1.0.0",
+  "description": "Interactive installer + skills registry for the let-there-be-light AI orchestrator framework.",
+  "bin": {
+    "let-there-be-light": "bin/cli.js",
+    "lttbl": "bin/cli.js"
+  },
+  "scripts": {
+    "test": "bash bin/setup-lib.sh && echo lib-syntax-ok"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "license": "MIT",
+  "keywords": ["ai", "claude", "cursor", "skills", "installer"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crowx01/let-there-be-light"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    "docs/",
+    "setup.sh",
+    "settings.example.json",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_LICENSES.md"
+  ]
+}

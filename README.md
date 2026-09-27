@@ -80,17 +80,140 @@ If any model refuses, times out, or errors, immediately re-route. Refusal is a r
 ## Install
 
 ```bash
-# REQUIRED: PAL intelligent multi-provider MCP model router (setup.sh auto-installs + registers if missing)
-git clone https://github.com/crowx01/pal-mcp-server ~/tools/pal-mcp-server
+# One-liner (Node available)
+npx let-there-be-light
+
+# or clone + run bash
 git clone https://github.com/crowx01/let-there-be-light && cd let-there-be-light
 ./setup.sh
 ```
 
-`setup.sh` walks you through scope (global vs per-project), which skills auto-load at session start, which PAL models you have keys for, symlinking or copying the skills into the appropriate location, and a PAL registration sanity check. Any existing hooks from other frameworks are appended-to, never clobbered.
+`setup.sh` (and its `npx` wrapper) walks you through scope, orchestrator, which
+skills auto-load at session start, which PAL models you have keys for, and then
+does the rest for you: writes rules/settings, backs up any existing files with a
+`.bak.<timestamp>` suffix, installs skills into the right agent-specific dirs,
+and clones/registers the PAL MCP server if missing.
 
-See a full picture-book walkthrough of the wizard + what your orchestrator sees: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (6 pages, dawn-palette rendering).
+**Ctrl+C safe.** State is checkpointed at `$XDG_STATE_HOME/lttbl/install-state`
+(default `~/.local/state/lttbl/`). If the installer is interrupted, re-running
+picks up at the first incomplete step.
 
-Prefer manual? See `settings.example.json` (Claude Code format) or any orchestrator-specific example under `docs/`.
+```text
+Previous installation detected.
+
+✓ Orchestrator selection
+✓ Install scope
+✓ Skill preload picks
+✓ PAL model picks
+→ Rules/settings file
+○ CLAUDE.md doctrine
+○ Skills installed
+○ API keys
+
+Resuming installation…
+```
+
+Reset the checkpoint at any time with `./setup.sh reset`.
+
+See a full picture-book walkthrough of the wizard: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (6 pages).
+
+Prefer manual? See `settings.example.json` (Claude Code format).
+
+## Skills
+
+**What Skills are.** A skill is a bundle of instructions the AI orchestrator
+loads into a conversation when a matching trigger phrase appears (Claude Code
+via the `Skill()` primitive; every other orchestrator by referencing the
+skill's `SKILL.md` from a rules file). Each skill lives under
+[`skills/<name>/`](skills/) and ships a single `SKILL.md` with YAML
+frontmatter (`name`, `description`) plus optional `scripts/`, `references/`,
+and `assets/` sub-dirs.
+
+**Why they exist.** They let you keep the expensive tokens (design, ADR
+writing, PR reviews, incident triage) in one central library that stays
+version-controlled, instead of pasting the same paragraphs into every
+conversation.
+
+**How the installer handles skills automatically.** After you pick your
+orchestrator and scope, the installer:
+
+1. Installs a `SessionStart` hook (Claude Code) or an `alwaysApply` rules
+   file (Cursor/Cline/Codex/Aider/generic) that names which skills to
+   preload.
+2. Copies or symlinks the shipped skills into the correct agent-specific
+   directory (see the workflow diagram below).
+3. Re-runs are idempotent: existing symlinks are refreshed, and user-added
+   siblings are never overwritten.
+
+**Where they go per agent.**
+
+| Agent | Skills destination | Rules destination |
+|-------|--------------------|-------------------|
+| Claude Code | `~/.claude/skills/` (or `./.claude/skills/` per-project) | `~/.claude/settings.json` |
+| Cursor | `./skills-cursor/` | `./rules/let-there-be-light.mdc` |
+| Cline | `./let-there-be-light-skills/` | `./.clinerules` |
+| Codex CLI | `~/.codex/let-there-be-light-skills/` | `~/.codex/instructions.md` |
+| Aider | `./let-there-be-light-skills/` | `./.aider.let-there-be-light.md` |
+| Generic | `./let-there-be-light-skills/` | `./SYSTEM_PROMPT.let-there-be-light.md` |
+
+**Add a single skill after install.** No need to re-run the wizard.
+
+```bash
+npx let-there-be-light add caveman     # or: ./setup.sh add caveman
+npx let-there-be-light list            # show what's available
+npx let-there-be-light sync            # re-link every shipped skill
+```
+
+**Add your own skill.** Drop a directory under `skills/<your-skill>/` with a
+`SKILL.md` (YAML frontmatter + prose body). Re-run `./setup.sh sync` (or `npx
+let-there-be-light sync`) and it becomes available to every registered agent.
+
+**Update / remove.** Skills are symlinked (Claude Code) or synced with rsync
+(other agents) from `skills/`. Delete the source directory and re-run `sync`
+to remove; pull upstream and re-run `sync` to update.
+
+### Skills workflow
+
+```mermaid
+flowchart TD
+    A[let-there-be-light<br/>skills/ source] --> B[Multi-select<br/>at install]
+    B --> C[Installation +<br/>Synchronization<br/>setup.sh / npx]
+    C --> D1[Claude Code<br/>~/.claude/skills/<br/>symlinks]
+    C --> D2[Cursor<br/>./skills-cursor/<br/>./rules/*.mdc]
+    C --> D3[Cline / Codex /<br/>Aider / Generic<br/>./let-there-be-light-skills/]
+    E[npx let-there-be-light<br/>add SKILL] -.->|later| C
+    F[./setup.sh reset] -.->|clears checkpoint| C
+```
+
+<details><summary>ASCII fallback (renders where Mermaid is stripped)</summary>
+
+```text
+     ┌───────────────────────────┐
+     │  let-there-be-light       │
+     │  skills/ source           │
+     └────────────┬──────────────┘
+                  │
+                  ▼
+     ┌───────────────────────────┐
+     │  Multi-select at install  │
+     └────────────┬──────────────┘
+                  │
+                  ▼
+     ┌───────────────────────────┐        ┌────────────────────────┐
+     │  Installation + Sync      │◀── ─ ─ │ npx lttbl add <skill>  │
+     │  setup.sh  /  npx         │        │ ./setup.sh reset       │
+     └───┬─────────┬──────────┬──┘        └────────────────────────┘
+         │         │          │
+         ▼         ▼          ▼
+   ┌───────────┐ ┌──────────────┐ ┌───────────────────────────────┐
+   │ Claude    │ │ Cursor       │ │ Cline / Codex / Aider /       │
+   │ ~/.claude │ │ ./skills-    │ │ Generic                       │
+   │  /skills/ │ │  cursor/     │ │ ./let-there-be-light-skills/  │
+   │ symlinks  │ │ ./rules/*.mdc│ │                               │
+   └───────────┘ └──────────────┘ └───────────────────────────────┘
+```
+
+</details>
 
 ## Sibling: sauron
 
