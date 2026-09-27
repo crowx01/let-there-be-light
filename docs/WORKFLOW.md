@@ -4,7 +4,7 @@ From cold repo to deployed service. Two invariants: (1) delegate the prose, neve
 
 ## 1. One-time install
 
-1. Clone the PAL MCP server (fork of zen-mcp-server): https://github.com/BeehiveInnovations/zen-mcp-server. Register it in `~/.claude.json` under `mcpServers.pal`.
+1. Clone the PAL MCP server — crowx01's routing-enhanced fork (capability-rank cross-provider auto model selection): https://github.com/crowx01/pal-mcp-server. On the claude-code path `setup.sh` clones and registers it for you under `mcpServers.pal`; for other orchestrators, register it there manually. (Upstream is BeehiveInnovations/pal-mcp-server, formerly zen-mcp-server; this fork's `main` carries the smarter routing.)
 2. Clone this repo.
 3. Run `./setup.sh`. The wizard walks you through:
    - **Scope.** Global (`~/.claude/settings.json`) or per-project (`./.claude/settings.json`). Per-project is the default; keeps the framework from attaching to unrelated work.

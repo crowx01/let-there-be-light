@@ -88,7 +88,7 @@ git clone https://github.com/crowx01/let-there-be-light && cd let-there-be-light
 
 `setup.sh` walks you through scope (global vs per-project), which skills auto-load at session start, which PAL models you have keys for, symlinking or copying the skills into the appropriate location, and a PAL registration sanity check. Any existing hooks from other frameworks are appended-to, never clobbered.
 
-See a full picture-book walkthrough of the wizard + what your orchestrator sees: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (4 pages, dawn-palette / fire-palette rendering).
+See a full picture-book walkthrough of the wizard + what your orchestrator sees: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (6 pages, dawn-palette rendering).
 
 Prefer manual? See `settings.example.json` (Claude Code format) or any orchestrator-specific example under `docs/`.
 
