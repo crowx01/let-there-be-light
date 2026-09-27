@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+"""
+code-skeleton - AST-skeleton-first code reader (regex fallback edition).
+
+Candidate #2 of the token-cutting roadmap. Instead of reading a whole source
+file into Claude's context (O(file_size)), emit only its structural skeleton -
+package/imports summary, and every type / class / function / method / exported
+symbol with its line number (O(symbols)). Claude then reads only the specific
+line ranges it actually needs to edit, e.g.  `Read path.py 120-158`.
+
+This is the deterministic fallback: it uses per-language regexes, so it needs no
+tree-sitter/ctags install. If universal-ctags IS present it is used first (richer,
+handles more languages); otherwise the regex extractor runs.
+
+Usage:
+    code-skeleton FILE [FILE ...]
+    code-skeleton src/          # recurses into a directory
+
+Output per file:
+    == path/to/file.ext (N lines) ==
+    12: class Foo
+    20:   def bar(self, x)
+    ...
+"""
+import sys, os, re, shutil, subprocess
+
+EXT_LANG = {
+    ".py": "py", ".js": "js", ".jsx": "js", ".ts": "ts", ".tsx": "ts",
+    ".go": "go", ".rb": "rb", ".java": "java", ".rs": "rs", ".php": "php",
+    ".c": "c", ".h": "c", ".cc": "cpp", ".cpp": "cpp", ".hpp": "cpp",
+}
+
+# language -> list of (regex, indent?) capturing a signature at start-of-def
+PATTERNS = {
+    "py":  [re.compile(r"^(\s*)(?:async\s+)?def\s+\w+\s*\([^)]*\)"),
+            re.compile(r"^(\s*)class\s+\w+")],
+    "js":  [re.compile(r"^(\s*)(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+\w+\s*\([^)]*\)"),
+            re.compile(r"^(\s*)(?:export\s+)?class\s+\w+"),
+            re.compile(r"^(\s*)(?:export\s+)?const\s+\w+\s*=\s*(?:async\s*)?\([^)]*\)\s*=>")],
+    "go":  [re.compile(r"^(\s*)func\s+(?:\([^)]*\)\s*)?\w+\s*\("),
+            re.compile(r"^(\s*)type\s+\w+\s+(?:struct|interface)")],
+    "rb":  [re.compile(r"^(\s*)def\s+\w+"),
+            re.compile(r"^(\s*)(?:class|module)\s+\w+")],
+    "java":[re.compile(r"^(\s*)(?:public|private|protected|static|final|abstract|\s)+[\w<>\[\],\s]+\s+\w+\s*\([^)]*\)\s*\{?"),
+            re.compile(r"^(\s*)(?:public|private|protected|\s)*(?:class|interface|enum)\s+\w+")],
+    "rs":  [re.compile(r"^(\s*)(?:pub\s+)?(?:async\s+)?fn\s+\w+"),
+            re.compile(r"^(\s*)(?:pub\s+)?(?:struct|enum|trait|impl)\s+\w+")],
+    "php": [re.compile(r"^(\s*)(?:public|private|protected|static|abstract|final|\s)*function\s+\w+\s*\([^)]*\)"),
+            re.compile(r"^(\s*)(?:abstract\s+|final\s+)?class\s+\w+")],
+    "c":   [re.compile(r"^(\w[\w\s\*]+\s+\**\w+\s*\([^;]*\)\s*\{?\s*$)")],
+}
+PATTERNS["ts"] = PATTERNS["js"] + [
+    re.compile(r"^(\s*)(?:export\s+)?(?:interface|type|enum)\s+\w+"),
+]
+PATTERNS["cpp"] = PATTERNS["c"] + [re.compile(r"^(\s*)(?:class|struct|namespace)\s+\w+")]
+
+
+def skeleton_regex(path, lang):
+    pats = PATTERNS.get(lang)
+    if not pats:
+        return None
+    out = []
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = f.readlines()
+    for i, raw in enumerate(lines, 1):
+        line = raw.rstrip("\n")
+        for pat in pats:
+            if pat.match(line):
+                out.append("{}: {}".format(i, line.strip()[:160]))
+                break
+    return len(lines), out
+
+
+def skeleton_ctags(path):
+    try:
+        r = subprocess.run(["ctags", "-x", "--sort=no", path],
+                           capture_output=True, text=True, timeout=20)
+        if r.returncode != 0 or not r.stdout.strip():
+            return None
+        rows = []
+        for ln in r.stdout.splitlines():
+            # ctags -x:  name  kind  line  file  source
+            parts = ln.split(None, 4)
+            if len(parts) >= 5 and parts[2].isdigit():
+                rows.append("{}: {} ({})".format(parts[2], parts[4].strip()[:150], parts[1]))
+        rows.sort(key=lambda s: int(s.split(":", 1)[0]))
+        with open(path, encoding="utf-8", errors="replace") as f:
+            n = sum(1 for _ in f)
+        return n, rows
+    except Exception:
+        return None
+
+
+def walk(paths):
+    for p in paths:
+        if os.path.isdir(p):
+            for root, _, files in os.walk(p):
+                if any(seg in root for seg in (".git", "node_modules", ".venv", "__pycache__", "dist", "build")):
+                    continue
+                for fn in files:
+                    if os.path.splitext(fn)[1] in EXT_LANG:
+                        yield os.path.join(root, fn)
+        elif os.path.isfile(p):
+            yield p
+
+
+def main():
+    if len(sys.argv) < 2:
+        sys.exit("usage: code-skeleton FILE|DIR [...]")
+    have_ctags = bool(shutil.which("ctags"))
+    for path in walk(sys.argv[1:]):
+        lang = EXT_LANG.get(os.path.splitext(path)[1])
+        res = (skeleton_ctags(path) if have_ctags else None) or skeleton_regex(path, lang)
+        if not res:
+            continue
+        n, rows = res
+        print("== {} ({} lines) ==".format(path, n))
+        if rows:
+            print("\n".join(rows))
+        else:
+            print("(no top-level symbols found; Read the file directly)")
+        print()
+
+
+if __name__ == "__main__":
+    main()

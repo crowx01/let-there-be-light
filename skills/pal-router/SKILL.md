@@ -74,3 +74,20 @@ Auto-invoke pal-router BEFORE reading when you see:
 
 ## The rule
 > Delegate the prose, never the judgment.
+
+## Deterministic pre-filters (`bin/`) — run BEFORE context or PAL
+
+These are 0-token, deterministic wrappers. They cannot refuse or hallucinate, so
+they run first and shrink payloads before anything reaches Claude or a PAL model.
+
+- **`bin/code-skeleton`** — AST-skeleton-first reader. Emits each file's symbols
+  (classes/functions/methods/types) with line numbers instead of the whole file,
+  turning code reading from O(file) into O(symbols). `bin/code-skeleton src/` then
+  `Read path 120-158` for only the ranges you need. ~30-40% on code-exploration.
+  Uses universal-ctags if installed, else a built-in regex extractor (py/js/ts/go/
+  rb/java/rs/php/c/cpp).
+- **`bin/strip-noise`** — strip ANSI/cursor escapes, collapse `\r` progress bars to
+  their final state, and elide the middle of long stack traces (keep top 2 + bottom 2
+  frames + the exception line). `pytest -q 2>&1 | bin/strip-noise`.
+
+Rule: skeleton-first for any file over ~150 lines; read full bodies only on demand.
