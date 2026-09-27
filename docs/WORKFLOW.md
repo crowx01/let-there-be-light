@@ -4,12 +4,12 @@ From cold repo to deployed service. Two invariants: (1) delegate the prose, neve
 
 ## 1. One-time install
 
-1. Clone the Hermes MCP server (fork of zen-mcp-server): https://github.com/BeehiveInnovations/zen-mcp-server. Register it in `~/.claude.json` under `mcpServers.pal`.
+1. Clone the PAL MCP server (fork of zen-mcp-server): https://github.com/BeehiveInnovations/zen-mcp-server. Register it in `~/.claude.json` under `mcpServers.pal`.
 2. Clone this repo.
 3. Run `./setup.sh`. The wizard walks you through:
    - **Scope.** Global (`~/.claude/settings.json`) or per-project (`./.claude/settings.json`). Per-project is the default; keeps the framework from attaching to unrelated work.
    - **Auto-load skills.** Which skills fire at every session start (`architect`, `test-strategist`, `ship-checklist` are on by default; `incident-response` and `retrospective` are off unless you opt in).
-   - **Hermes models.** Pick which models you have keys for. Unselected models are dropped from the rendered hook so Claude never routes to them.
+   - **PAL models.** Pick which models you have keys for. Unselected models are dropped from the rendered hook so Claude never routes to them.
 4. Fill in your API keys in the generated `.env.lttbl.example` and source it from your shell rc.
 5. Symlink skills into the discoverable path (the wizard offers to do this automatically).
 6. Restart Claude Code.
@@ -58,7 +58,7 @@ Runs on every bug fix, hotfix, or refactor that claims to fix an issue. Mirrors 
 
 **B. Gap tests.** Run every missing test, negative control, and edge case the validator flagged. Use your dev tools: test suite, linter, type checker, coverage tool, mutation testing, contract tests.
 
-**C. Adversarial code review.** `mcp__hermes__challenge` with `pro` primary, `groq` fallback. Attacks the fix on correctness under edge cases, right-layer-to-fix, test completeness, rollback plan, backwards compat, and 10x-traffic behavior.
+**C. Adversarial code review.** `mcp__pal__challenge` with `pro` primary, `groq` fallback. Attacks the fix on correctness under edge cases, right-layer-to-fix, test completeness, rollback plan, backwards compat, and 10x-traffic behavior.
 
 **D. Synthesize and write.** Combine validator output + gap-closing tests + debate transcript into the final assessment. Groq drafts the PR description; you byte-check file paths, function signatures, migration steps against the raw diff before merging or shipping.
 
@@ -70,7 +70,7 @@ Rule: A fix without a test that would have caught the original bug is a bet, not
 |---|---|---|
 | session start | enabled skills auto-invoke | SessionStart hook |
 | every prompt | delegate-first + failover re-asserted | UserPromptSubmit hook |
-| any bulk read/write | routed to a Hermes model per task type | hermes-router skill |
+| any bulk read/write | routed to a PAL model per task type | pal-router skill |
 | any design | ADR + trade-off matrix + unknowns | architect skill |
 | any code change | readability rules + test plan + PR debate + babysit | clean-code, test-strategist, debate-review, babysit-pr |
 | any release | pre-deploy checklist + rollback + smoke | ship-checklist skill |

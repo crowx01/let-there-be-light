@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # let-there-be-light - interactive setup.
-# Lets you pick which Hermes models to enable and whether the hooks install
+# Lets you pick which PAL models to enable and whether the hooks install
 # globally (~/.claude/settings.json) or per-project (./.claude/settings.json).
 # Writes only what you approve. Backs up any existing settings first.
 
@@ -90,8 +90,8 @@ S_IR=$(prompt_yn    "incident-response (alert triage + runbook lookup)" n)
 S_RETRO=$(prompt_yn "retrospective (post-mortem writer)" n)
 
 # ---------- 3. models ----------
-hd "3. Which Hermes models should be listed in the delegate-first policy?"
-say "  Pick every model your Hermes install actually has keys for."
+hd "3. Which PAL models should be listed in the delegate-first policy?"
+say "  Pick every model your PAL install actually has keys for."
 say "  Unselected models are dropped from the routing map so Claude never tries them."
 M_GROQ=$(prompt_yn "groq (openai/gpt-oss-120b) - report writing, validation" y)
 M_NEMO=$(prompt_yn "nemotron (nvidia via OpenRouter) - bulk reading, 1M ctx" y)
@@ -118,8 +118,8 @@ ROUTING=""
 [ "$M_GROK" = 1 ] && ROUTING+="grok (x-ai, 2M ctx) for permissive high-context security reasoning when Gemini refuses. "
 [ "$M_FLSH" = 1 ] && ROUTING+="flash (gemini-3.6-flash, 1M ctx) for fast structured extraction. "
 [ "$M_ORFR" = 1 ] && ROUTING+="or-free (OpenRouter meta-router, 200K ctx) as generalist fallback. "
-[ "$M_PRO" = 1 ]  && ROUTING+="pro (gemini-3-pro-preview) for deep-reasoning fallback and adversarial debate via mcp__hermes__challenge. "
-[ -z "$ROUTING" ] && ROUTING="(no Hermes models selected; delegate-first policy inactive). "
+[ "$M_PRO" = 1 ]  && ROUTING+="pro (gemini-3-pro-preview) for deep-reasoning fallback and adversarial debate via mcp__pal__challenge. "
+[ -z "$ROUTING" ] && ROUTING="(no PAL models selected; delegate-first policy inactive). "
 
 # build skills list
 SKILLS_LIST=""
@@ -142,7 +142,7 @@ else
   SS_TEXT="Doctrine + routing map are in CLAUDE.md at the project root (already loaded)."
 fi
 
-UPS_TEXT="Doctrine active from CLAUDE.md. Delegate + failover. Batch Hermes calls."
+UPS_TEXT="Doctrine active from CLAUDE.md. Delegate + failover. Batch PAL calls."
 
 # ---------- 5. build settings.json ----------
 # Each hook fires: printf '%s\n' '<inline JSON with additionalContext>'
@@ -347,7 +347,7 @@ Sibling framework \`sauron\` supplies: delegate-first routing, keep-in-Claude li
 ## 4-step validation pipeline (lttbl variant: per code fix before ship)
 A. Stress-test via fix-validator skill.
 B. Run the gap tests the validator flags.
-C. Adversarial challenge via mcp__hermes__challenge (pro primary, groq fallback).
+C. Adversarial challenge via mcp__pal__challenge (pro primary, groq fallback).
 D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low-confidence claims only.
 
 ## Code-work strategy (diff-first)
@@ -381,13 +381,13 @@ Any model refusal or error routes to the next model in the map. A classifier ref
 ## 4-step validation pipeline (per code fix before ship OR per confirmed finding)
 A. Stress-test via fix-validator (or validator) skill.
 B. Run the gap tests the validator flags.
-C. Adversarial challenge via mcp__hermes__challenge (pro primary, groq fallback).
+C. Adversarial challenge via mcp__pal__challenge (pro primary, groq fallback).
 D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low-confidence claims only.
 
 ## Token efficiency rules (this framework exists to cut Claude token cost)
 - Any tool output over 5 KB routes through nemotron (bulk) or flash (structured) for summarization before Claude reads.
-- Batch related Hermes sub-tasks into one structured call, not N separate ones.
-- Hermes responses on factual output must include {claim, confidence, source_span} triples. Claude byte-checks entries below high confidence only.
+- Batch related PAL sub-tasks into one structured call, not N separate ones.
+- PAL responses on factual output must include {claim, confidence, source_span} triples. Claude byte-checks entries below high confidence only.
 - Never re-Read a file already Read this session; recall from conversation context.
 - Preemptively bound predictable-bloat outputs: append | head -c 5000 or | jq -c on Bash calls whose full output you don't need.
 - Never delegate the same task twice; cache the result inline in the conversation.
@@ -413,11 +413,11 @@ D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low
   - \`find . -name '*.log' -exec wc -l {} + | sort -n | tail\`
 
 ## In-conversation failure-map
-- On any Hermes refusal or 4xx/5xx response, tag \"\$model refused \$task-class this session\".
+- On any PAL refusal or 4xx/5xx response, tag \"\$model refused \$task-class this session\".
 - Skip that model for the next similar task in the same conversation. Do not retry the failing route inside one turn.
 
 ## Route-plan pre-flight (speculative, measure before generalizing)
-- For any task with 3 or more distinct sub-steps, first fire a small groq call (~200 tokens) asking for a routing plan (which sub-task goes to which Hermes model).
+- For any task with 3 or more distinct sub-steps, first fire a small groq call (~200 tokens) asking for a routing plan (which sub-task goes to which PAL model).
 - Then execute the plan.
 - If the plan overhead exceeds the saving on tasks under 5 sub-steps, drop this rule.
 
@@ -444,7 +444,7 @@ fi
   CLAUDE_MD_SIZE=$(wc -c < "$CLAUDE_MD")
   if [ "$CLAUDE_MD_SIZE" -gt 5120 ]; then
     warn "CLAUDE.md is ${CLAUDE_MD_SIZE} bytes (over 5 KB threshold)."
-    warn "  Every session loads this file. Consider compressing via Hermes caveman mode:"
+    warn "  Every session loads this file. Consider compressing via PAL caveman mode:"
     warn "    Skill(caveman) then ask groq to compress the managed blocks."
     warn "  Or manually trim: your appended blocks are marked by <!-- BEGIN ... -->."
   fi
@@ -475,47 +475,47 @@ if [ "$ORCH" = "c" ] && [ -d "$SKILLS_SRC" ]; then
   esac
 fi
 
-# ---------- 6c. MANDATORY: ensure Hermes MCP server is installed + registered ----------
-# Hermes (intelligent multi-provider model router) is REQUIRED: the delegate-first
-# doctrine calls mcp__hermes__* tools. Without it, Claude Code silently no-ops them.
-HERMES_DIR="${HERMES_DIR:-$HOME/tools/hermes-mcp-server}"
-HERMES_REPO="https://github.com/crowx01/hermes-mcp-server"
+# ---------- 6c. MANDATORY: ensure PAL MCP server is installed + registered ----------
+# PAL (intelligent multi-provider model router) is REQUIRED: the delegate-first
+# doctrine calls mcp__pal__* tools. Without it, Claude Code silently no-ops them.
+PAL_DIR="${PAL_DIR:-$HOME/tools/pal-mcp-server}"
+PAL_REPO="https://github.com/crowx01/pal-mcp-server"
 if [ "$ORCH" = "c" ]; then
-  if [ -f "$HOME/.claude.json" ] && jq -e '.mcpServers.hermes // (.projects | to_entries[]?.value.mcpServers.hermes)' "$HOME/.claude.json" >/dev/null 2>&1; then
-    ok "Hermes MCP server is registered in ~/.claude.json"
+  if [ -f "$HOME/.claude.json" ] && jq -e '.mcpServers.pal // (.projects | to_entries[]?.value.mcpServers.pal)' "$HOME/.claude.json" >/dev/null 2>&1; then
+    ok "PAL MCP server is registered in ~/.claude.json"
   else
-    warn "Hermes MCP server is REQUIRED and is not registered."
-    printf '  Install + register Hermes now? [Y/n] '; read -r _hans
+    warn "PAL MCP server is REQUIRED and is not registered."
+    printf '  Install + register PAL now? [Y/n] '; read -r _hans
     case "$_hans" in
-      [Nn]*) err "Hermes is mandatory for the delegate-first doctrine. Aborting install."; exit 1 ;;
+      [Nn]*) err "PAL is mandatory for the delegate-first doctrine. Aborting install."; exit 1 ;;
     esac
-    command -v git     >/dev/null 2>&1 || { err "git not found; cannot install Hermes."; exit 1; }
-    command -v jq      >/dev/null 2>&1 || { err "jq not found; cannot register Hermes."; exit 1; }
-    command -v python3 >/dev/null 2>&1 || { err "python3 not found; cannot build Hermes."; exit 1; }
-    if [ ! -d "$HERMES_DIR/.git" ]; then
-      say "  cloning $HERMES_REPO -> $HERMES_DIR"
-      git clone --depth 1 "$HERMES_REPO" "$HERMES_DIR" || { err "Hermes clone failed"; exit 1; }
+    command -v git     >/dev/null 2>&1 || { err "git not found; cannot install PAL."; exit 1; }
+    command -v jq      >/dev/null 2>&1 || { err "jq not found; cannot register PAL."; exit 1; }
+    command -v python3 >/dev/null 2>&1 || { err "python3 not found; cannot build PAL."; exit 1; }
+    if [ ! -d "$PAL_DIR/.git" ]; then
+      say "  cloning $PAL_REPO -> $PAL_DIR"
+      git clone --depth 1 "$PAL_REPO" "$PAL_DIR" || { err "PAL clone failed"; exit 1; }
     else
-      ok "  Hermes repo already present at $HERMES_DIR"
+      ok "  PAL repo already present at $PAL_DIR"
     fi
-    if [ ! -x "$HERMES_DIR/.hermes_venv/bin/python" ]; then
+    if [ ! -x "$PAL_DIR/.pal_venv/bin/python" ]; then
       say "  creating venv"
-      python3 -m venv "$HERMES_DIR/.hermes_venv" || { err "venv creation failed"; exit 1; }
+      python3 -m venv "$PAL_DIR/.pal_venv" || { err "venv creation failed"; exit 1; }
     fi
     say "  installing dependencies"
-    "$HERMES_DIR/.hermes_venv/bin/python" -m pip install -q -r "$HERMES_DIR/requirements.txt" || { err "dependency install failed"; exit 1; }
+    "$PAL_DIR/.pal_venv/bin/python" -m pip install -q -r "$PAL_DIR/requirements.txt" || { err "dependency install failed"; exit 1; }
     [ -f "$HOME/.claude.json" ] || echo '{}' > "$HOME/.claude.json"
     _tmp="$(mktemp)"
-    jq --arg cmd "$HERMES_DIR/.hermes_venv/bin/python" --arg srv "$HERMES_DIR/server.py" \
-      '.mcpServers = (.mcpServers // {}) | .mcpServers.hermes = {type:"stdio", command:$cmd, args:[$srv], env:{DEFAULT_MODEL:"auto"}}' \
-      "$HOME/.claude.json" > "$_tmp" && mv "$_tmp" "$HOME/.claude.json" || { err "Hermes registration failed"; exit 1; }
-    ok "Hermes cloned, built, and registered (DEFAULT_MODEL=auto -> intelligent cross-provider router)"
-    warn "  Add your provider keys under mcpServers.hermes.env in ~/.claude.json:"
+    jq --arg cmd "$PAL_DIR/.pal_venv/bin/python" --arg srv "$PAL_DIR/server.py" \
+      '.mcpServers = (.mcpServers // {}) | .mcpServers.pal = {type:"stdio", command:$cmd, args:[$srv], env:{DEFAULT_MODEL:"auto"}}' \
+      "$HOME/.claude.json" > "$_tmp" && mv "$_tmp" "$HOME/.claude.json" || { err "PAL registration failed"; exit 1; }
+    ok "PAL cloned, built, and registered (DEFAULT_MODEL=auto -> intelligent cross-provider router)"
+    warn "  Add your provider keys under mcpServers.pal.env in ~/.claude.json:"
     warn "    GEMINI_API_KEY, OPENROUTER_API_KEY, and/or CUSTOM_API_URL + CUSTOM_API_KEY (groq)"
   fi
 else
-  warn "Non-Claude orchestrator: install Hermes manually and wire it to your MCP client:"
-  warn "  git clone $HERMES_REPO ~/tools/hermes-mcp-server"
+  warn "Non-Claude orchestrator: install PAL manually and wire it to your MCP client:"
+  warn "  git clone $PAL_REPO ~/tools/pal-mcp-server"
 fi
 
 # ---------- 6d. copy skill files for non-Claude orchestrators ----------
@@ -663,8 +663,8 @@ hd "Next steps"
 case "$ORCH" in
   c)
     cat <<EOF
-  1. Register Hermes as an MCP server in ~/.claude.json:
-     ${DIM}"mcpServers": { "hermes": { "type": "stdio", "command": "/path/to/hermes-mcp-server/.hermes_venv/bin/python", "args": ["/path/to/hermes-mcp-server/server.py"], "env": { ...keys... } } }${RST}
+  1. Register PAL as an MCP server in ~/.claude.json:
+     ${DIM}"mcpServers": { "pal": { "type": "stdio", "command": "/path/to/pal-mcp-server/.pal_venv/bin/python", "args": ["/path/to/pal-mcp-server/server.py"], "env": { ...keys... } } }${RST}
   2. Source your API keys: ${CYN}source $(dirname "$TARGET")/.env.lttbl${RST}
      ${DIM}(falls back to .env.lttbl.example if you skipped interactive entry)${RST}
   3. Restart Claude Code.

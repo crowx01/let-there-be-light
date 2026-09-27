@@ -6,7 +6,7 @@
 
 ## What it is
 
-It is a framework of skills that turns your AI orchestrator into a senior engineer covering design, implementation, staging, and production. It installs into Claude Code, Cursor, Cline, Codex CLI, Aider, or generates a portable `SYSTEM_PROMPT.md` when the orchestrator is not one of the five. The wizard walks you through picking the orchestrator, the install scope, the skills, and the Hermes models. The higher-tier model makes the architectural decisions while cheaper models handle the busy work.
+It is a framework of skills that turns your AI orchestrator into a senior engineer covering design, implementation, staging, and production. It installs into Claude Code, Cursor, Cline, Codex CLI, Aider, or generates a portable `SYSTEM_PROMPT.md` when the orchestrator is not one of the five. The wizard walks you through picking the orchestrator, the install scope, the skills, and the PAL models. The higher-tier model makes the architectural decisions while cheaper models handle the busy work.
 
 ## The days of creation (skills)
 
@@ -18,7 +18,7 @@ It is a framework of skills that turns your AI orchestrator into a senior engine
 | [ship-checklist](skills/ship-checklist/SKILL.md) | Staging: pre-deploy checklist, rollback plan, smoke tests. | mine |
 | [incident-response](skills/incident-response/SKILL.md) | Production: alert triage, blast radius, status update. | mine |
 | [retrospective](skills/retrospective/SKILL.md) | Post-incident: timeline, blameless post-mortem, action items. | mine |
-| [hermes-router](skills/hermes-router/SKILL.md) | Delegate-first + failover routing doctrine. | mine |
+| [pal-router](skills/pal-router/SKILL.md) | Delegate-first + failover routing doctrine. | mine |
 | [debate-review](skills/debate-review/SKILL.md) | Two-model PR debate, posts one review from your gh/glab/az. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 | [babysit-pr](skills/babysit-pr/SKILL.md) | PR review rounds automation: verify, fix, reply, resolve, re-run. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 
@@ -55,7 +55,7 @@ Every code fix runs through a fixed 4-step pipeline before it merges or ships, m
 
 1. **Stress-test** the fix with `fix-validator`: 12 fields including Root Cause Confidence, Regression Risk, Blast Radius, Test Coverage, Missing Tests, Rollback Complexity, Side Effects, Security Impact, Performance Impact, Backwards Compatibility, Deployment Risk, Final Verdict.
 2. **Gap tests** for every missing test the validator flagged (unit, contract, integration, mutation).
-3. **Adversarial code review** via `mcp__hermes__challenge` (pro primary, groq fallback). Attacks the fix from correctness, layering, rollback, backwards compat, and 10x-traffic angles.
+3. **Adversarial code review** via `mcp__pal__challenge` (pro primary, groq fallback). Attacks the fix from correctness, layering, rollback, backwards compat, and 10x-traffic angles.
 4. **Synthesize + write** the PR description (delegated to groq); human byte-checks file paths, function signatures, migration steps against the raw diff before merge.
 
 Full spec: [skills/fix-validator/SKILL.md](skills/fix-validator/SKILL.md).
@@ -80,13 +80,13 @@ If any model refuses, times out, or errors, immediately re-route. Refusal is a r
 ## Install
 
 ```bash
-# REQUIRED: Hermes intelligent multi-provider MCP model router (setup.sh auto-installs + registers if missing)
-git clone https://github.com/crowx01/hermes-mcp-server ~/tools/hermes-mcp-server
+# REQUIRED: PAL intelligent multi-provider MCP model router (setup.sh auto-installs + registers if missing)
+git clone https://github.com/crowx01/pal-mcp-server ~/tools/pal-mcp-server
 git clone https://github.com/crowx01/let-there-be-light && cd let-there-be-light
 ./setup.sh
 ```
 
-`setup.sh` walks you through scope (global vs per-project), which skills auto-load at session start, which Hermes models you have keys for, symlinking or copying the skills into the appropriate location, and a Hermes registration sanity check. Any existing hooks from other frameworks are appended-to, never clobbered.
+`setup.sh` walks you through scope (global vs per-project), which skills auto-load at session start, which PAL models you have keys for, symlinking or copying the skills into the appropriate location, and a PAL registration sanity check. Any existing hooks from other frameworks are appended-to, never clobbered.
 
 See a full picture-book walkthrough of the wizard + what your orchestrator sees: **[docs/install-walkthrough.pdf](docs/install-walkthrough.pdf)** (4 pages, dawn-palette / fire-palette rendering).
 
@@ -94,7 +94,7 @@ Prefer manual? See `settings.example.json` (Claude Code format) or any orchestra
 
 ## Sibling: sauron
 
-This repo is the sibling to [crowx01/sauron](https://github.com/crowx01/sauron), the offensive-security framework for bug-bounty and pentest work. Same underlying pattern (orchestrator + Hermes delegate-first + interactive setup wizard); different skills.
+This repo is the sibling to [crowx01/sauron](https://github.com/crowx01/sauron), the offensive-security framework for bug-bounty and pentest work. Same underlying pattern (orchestrator + PAL delegate-first + interactive setup wizard); different skills.
 
 ## Attribution
 
