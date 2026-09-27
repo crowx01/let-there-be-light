@@ -47,14 +47,7 @@
     padding-top: 30mm;
     text-align: center;
   }
-  .rays {
-    font-family: "DejaVu Sans Mono", monospace;
-    color: #d9a520;
-    font-size: 11px;
-    line-height: 1.15;
-    white-space: pre;
-    margin: 0 auto 14px;
-  }
+  .emblem { display: block; margin: 0 auto 12px; }
   .kicker {
     display: inline-block; margin: 8px 0 0;
     background: #f4e4b8; color: #7a5a12;
@@ -116,15 +109,25 @@
 
 <!-- ============ COVER ============ -->
 <div class="cover">
-  <div class="rays">    \   |   /
-     .-"""-.
-  -- (  ☀  ) --
-     `-...-`
-    /   |   \</div>
-  <pre class="banner"> _      ___ _____   _____ _  _ ___ ___ ___   ___ ___   _    ___ ___ _  _ _____
-| |    | __|_   _| |_   _| || | __| _ \ __| | _ ) __| | |  |_ _/ __| || |_   _|
-| |__  | _|  | |     | | | __ | _||   / _|  | _ \ _|  | |__ | | (_ | __ | | |
-|____| |___| |_|     |_| |_||_|___|_|_\___| |___/___| |____|___\___|_||_| |_|</pre>
+  <svg class="emblem" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff6d5"/>
+        <stop offset="55%" stop-color="#f4c430"/>
+        <stop offset="100%" stop-color="#c8901a"/>
+      </radialGradient>
+    </defs>
+    <g stroke="#d9a520" stroke-width="3" stroke-linecap="round">
+      <line x1="60" y1="60" x2="60" y2="6"/>  <line x1="60" y1="60" x2="60" y2="114"/>
+      <line x1="60" y1="60" x2="6" y2="60"/>  <line x1="60" y1="60" x2="114" y2="60"/>
+      <line x1="60" y1="60" x2="22" y2="22"/> <line x1="60" y1="60" x2="98" y2="22"/>
+      <line x1="60" y1="60" x2="22" y2="98"/> <line x1="60" y1="60" x2="98" y2="98"/>
+      <line x1="60" y1="60" x2="40" y2="12"/> <line x1="60" y1="60" x2="80" y2="12"/>
+      <line x1="60" y1="60" x2="40" y2="108"/><line x1="60" y1="60" x2="80" y2="108"/>
+    </g>
+    <circle cx="60" cy="60" r="26" fill="#fdfaf3"/>
+    <circle cx="60" cy="60" r="24" fill="url(#sun)" stroke="#c8901a" stroke-width="1.5"/>
+  </svg>
   <h1>LET&nbsp;THERE&nbsp;BE&nbsp;LIGHT</h1>
   <div class="subtitle">SETUP WALKTHROUGH</div>
   <div class="kicker">NOW CUTS HOOK OVERHEAD 85%</div>
@@ -165,11 +168,24 @@
 <!-- ============ PAGE: terminal session ============ -->
 <div class="pagebreak"></div>
 <h2>2. The terminal session (Claude Code path)</h2>
-<pre class="banner">   \   |   /      .-"""-.
-  -- (  ☀  ) --   let there be light
-     `-...-`
-
-interactive setup  ·  from design to production</pre>
+<div style="text-align:center;margin:6px 0 12px;">
+  <svg width="52" height="52" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="sun2" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#fff6d5"/><stop offset="55%" stop-color="#f4c430"/>
+        <stop offset="100%" stop-color="#c8901a"/>
+      </radialGradient>
+    </defs>
+    <g stroke="#d9a520" stroke-width="3" stroke-linecap="round">
+      <line x1="60" y1="60" x2="60" y2="6"/><line x1="60" y1="60" x2="60" y2="114"/>
+      <line x1="60" y1="60" x2="6" y2="60"/><line x1="60" y1="60" x2="114" y2="60"/>
+      <line x1="60" y1="60" x2="22" y2="22"/><line x1="60" y1="60" x2="98" y2="22"/>
+      <line x1="60" y1="60" x2="22" y2="98"/><line x1="60" y1="60" x2="98" y2="98"/>
+    </g>
+    <circle cx="60" cy="60" r="24" fill="url(#sun2)" stroke="#c8901a" stroke-width="1.5"/>
+  </svg>
+  <div style="color:#8a7a55;font-style:italic;font-size:9.5px;margin-top:2px;">interactive setup · from design to production</div>
+</div>
 
 <pre class="term"><span class="prompt">0. Which agent orchestrator do you use?</span>
   c) claude-code     (default)  full: hooks + Skill() invocations + delegate policy
