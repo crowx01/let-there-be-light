@@ -464,10 +464,43 @@ PAL_DIR="${PAL_DIR:-$HOME/tools/pal-mcp-server}"
 PAL_REPO="https://github.com/crowx01/pal-mcp-server"
 register_pal() {
   [ "$ORCH" = "c" ] || { warn "non-Claude orchestrator: install PAL manually ($PAL_REPO)"; return 0; }
-  if [ -f "$HOME/.claude.json" ] && jq -e '.mcpServers.pal // (.projects | to_entries[]?.value.mcpServers.pal)' "$HOME/.claude.json" >/dev/null 2>&1; then
-    ok "PAL MCP already registered"
+
+  # Always ensure the agentic toolbelt config exists (fresh installs AND upgrades).
+  # bash is further limited to a read-only command allowlist baked into pal itself.
+  if [ ! -f "$HOME/.pal/toolbelt.json" ]; then
+    mkdir -p "$HOME/.pal"
+    cat > "$HOME/.pal/toolbelt.json" <<'TBJSON'
+{
+  "tools": [
+    {"name": "bash",      "enabled": true,  "sandbox": "readonly"},
+    {"name": "read_file", "enabled": true,  "sandbox": "readonly"},
+    {"name": "gh",        "enabled": true,  "sandbox": "readonly"},
+    {"name": "web_fetch", "enabled": true,  "sandbox": "readonly"},
+    {"name": "clink",     "enabled": false, "sandbox": "readonly"}
+  ]
+}
+TBJSON
+    ok "wrote default toolbelt config → ~/.pal/toolbelt.json"
+  fi
+
+  [ -f "$HOME/.claude.json" ] || echo '{}' > "$HOME/.claude.json"
+  local tmp
+
+  # Upgrade path: pal already registered -> ensure PAL_TOOLBELT=1 without
+  # clobbering other env keys (mktemp+mv; never redirect jq back onto its input).
+  if jq -e '.mcpServers.pal' "$HOME/.claude.json" >/dev/null 2>&1; then
+    if jq -e '.mcpServers.pal.env.PAL_TOOLBELT' "$HOME/.claude.json" >/dev/null 2>&1; then
+      ok "PAL MCP already registered (toolbelt on)"
+    else
+      tmp="$(mktemp)"
+      jq '.mcpServers.pal.env = ((.mcpServers.pal.env // {}) + {PAL_TOOLBELT:"1"})' \
+        "$HOME/.claude.json" > "$tmp" && mv "$tmp" "$HOME/.claude.json"
+      ok "PAL MCP upgraded: PAL_TOOLBELT=1 added to existing registration"
+    fi
     return 0
   fi
+
+  # Fresh install.
   command -v git >/dev/null 2>&1 || { err "git not found"; return 1; }
   command -v python3 >/dev/null 2>&1 || { err "python3 not found"; return 1; }
   if [ ! -d "$PAL_DIR/.git" ]; then
@@ -476,12 +509,13 @@ register_pal() {
   fi
   [ -x "$PAL_DIR/.pal_venv/bin/python" ] || python3 -m venv "$PAL_DIR/.pal_venv"
   "$PAL_DIR/.pal_venv/bin/python" -m pip install -q -r "$PAL_DIR/requirements.txt"
-  [ -f "$HOME/.claude.json" ] || echo '{}' > "$HOME/.claude.json"
-  local tmp; tmp="$(mktemp)"
+  tmp="$(mktemp)"
+  # PAL_TOOLBELT=1 turns on the agentic tool-loop; smart-router features
+  # (self-heal, cache, classifier, refusal-memory, health-probe) default on in-code.
   jq --arg cmd "$PAL_DIR/.pal_venv/bin/python" --arg srv "$PAL_DIR/server.py" \
-    '.mcpServers = (.mcpServers // {}) | .mcpServers.pal = {type:"stdio", command:$cmd, args:[$srv], env:{DEFAULT_MODEL:"auto"}}' \
+    '.mcpServers = (.mcpServers // {}) | .mcpServers.pal = {type:"stdio", command:$cmd, args:[$srv], env:{DEFAULT_MODEL:"auto", PAL_TOOLBELT:"1"}}' \
     "$HOME/.claude.json" > "$tmp" && mv "$tmp" "$HOME/.claude.json"
-  ok "PAL registered (DEFAULT_MODEL=auto)"
+  ok "PAL registered (DEFAULT_MODEL=auto, toolbelt on)"
 }
 checkpoint pal_register "PAL MCP registration" register_pal
 

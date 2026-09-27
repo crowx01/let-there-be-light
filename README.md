@@ -22,15 +22,6 @@ It is a framework of skills that turns your AI orchestrator into a senior engine
 | [debate-review](skills/debate-review/SKILL.md) | Two-model PR debate, posts one review from your gh/glab/az. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 | [babysit-pr](skills/babysit-pr/SKILL.md) | PR review rounds automation: verify, fix, reply, resolve, re-run. | adapted from [amElnagdy/review-skills](https://github.com/amElnagdy/review-skills) (MIT) |
 
-## What stays in your orchestrator (never delegated)
-
-- user-facing engineering decisions
-- severity of an incident
-- risk vs speed trade-offs
-- safety-boundary checks (secrets, destructive migrations, prod actions)
-- side-effecting actions (kubectl apply, terraform apply, DB migrations)
-- tool-sequence orchestration
-
 ## Model routing workflow
 
 The router picks a delegate per task class. High-context / low-tokens paths win by default; the orchestrator's own model is reserved for judgment calls and side effects.
@@ -114,10 +105,6 @@ The installer supports six targets. Pick one at prompt `0` in `./setup.sh`.
 
 For non-Claude orchestrators the installer also appends an index of the shipped skills to the rules file so the model knows what SKILL.md files it can read when a trigger phrase appears (since only Claude Code has the `Skill()` primitive).
 
-## Failover doctrine
-
-If any model refuses, times out, or errors, immediately re-route. Refusal is a routing problem, not a stop.
-
 ## Install
 
 ```bash
@@ -136,7 +123,12 @@ git clone https://github.com/crowx01/let-there-be-light && cd let-there-be-light
 skills auto-load at session start, which PAL models you have keys for, and then
 does the rest for you: writes rules/settings, backs up any existing files with a
 `.bak.<timestamp>` suffix, installs skills into the right agent-specific dirs,
-and clones/registers the PAL MCP server if missing.
+and clones/registers the PAL MCP server if missing. The registered PAL ships
+the smart-router (self-heal, response-cache, classifier, refusal-memory,
+health-probe — all on by default) and an opt-in **agentic toolbelt**
+(`PAL_TOOLBELT=1`, default config at `~/.pal/toolbelt.json`) that lets routed
+models call local read-only tools — `bash` (limited to a read-only command
+allowlist), `read_file`, `gh`, and `web_fetch` — during a turn.
 
 **Ctrl+C safe.** State is checkpointed at `$XDG_STATE_HOME/lttbl/install-state`
 (default `~/.local/state/lttbl/`). If the installer is interrupted, re-running
