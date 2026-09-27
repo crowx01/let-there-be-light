@@ -99,7 +99,7 @@ M_NEMO=$(prompt_yn "nemotron (nvidia via OpenRouter) - bulk reading, 1M ctx" y)
 M_GROK=$(prompt_yn "grok (x-ai via OpenRouter, 2M ctx) - permissive security reasoning" y)
 M_FLSH=$(prompt_yn "flash (gemini-3.6-flash) - structured extraction" y)
 M_ORFR=$(prompt_yn "or-free (openrouter meta-router) - generic fallback" y)
-M_PRO=$(prompt_yn "pro (gemini-3-pro-preview) - adversarial debate" y)
+M_PRO=$(prompt_yn "pro (gemini-3.1-pro-preview) - adversarial debate" y)
 
 # guard: warn if user selected nothing (both no skills AND no models)
 if [ "$S_CAVE" = 0 ] && [ "$S_ARCH" = 0 ] && [ "$S_TEST" = 0 ] && \
@@ -119,7 +119,7 @@ ROUTING=""
 [ "$M_GROK" = 1 ] && ROUTING+="grok (x-ai, 2M ctx) for permissive high-context security reasoning when Gemini refuses. "
 [ "$M_FLSH" = 1 ] && ROUTING+="flash (gemini-3.6-flash, 1M ctx) for fast structured extraction. "
 [ "$M_ORFR" = 1 ] && ROUTING+="or-free (OpenRouter meta-router, 200K ctx) as generalist fallback. "
-[ "$M_PRO" = 1 ]  && ROUTING+="pro (gemini-3-pro-preview) for deep-reasoning fallback and adversarial debate via mcp__pal__challenge. "
+[ "$M_PRO" = 1 ]  && ROUTING+="pro (gemini-3.1-pro-preview) for deep-reasoning fallback and adversarial debate via mcp__pal__challenge. "
 [ -z "$ROUTING" ] && ROUTING="(no PAL models selected; delegate-first policy inactive). "
 
 # build skills list
@@ -143,7 +143,7 @@ else
   SS_TEXT="Doctrine + routing map are in CLAUDE.md at the project root (already loaded)."
 fi
 
-UPS_TEXT="Doctrine active from CLAUDE.md. Delegate + failover. Batch PAL calls."
+UPS_TEXT="Every message: DEFAULT TO PAL for each task (bulk read to nemotron, write/validate to groq, structured to flash per CLAUDE.md routing); read source via bin/code-skeleton first, pipe build/test output through bin/strip-noise; keep only decisions/severity/safety/side-effects in Claude; failover on refusal, never stop."
 
 # ---------- 5. build settings.json ----------
 # Each hook fires: printf '%s\n' '<inline JSON with additionalContext>'
@@ -386,6 +386,7 @@ C. Adversarial challenge via mcp__pal__challenge (pro primary, groq fallback).
 D. Synthesize with confidence markers; groq drafts prose, Claude spot-checks low-confidence claims only.
 
 ## Token efficiency rules (this framework exists to cut Claude token cost)
+- Read source with bin/code-skeleton (symbols + line numbers) before loading whole files; Read only the ranges you need. Pipe noisy build/test output through bin/strip-noise. Both are 0-token, deterministic.
 - Any tool output over 5 KB routes through nemotron (bulk) or flash (structured) for summarization before Claude reads.
 - Batch related PAL sub-tasks into one structured call, not N separate ones.
 - PAL responses on factual output must include {claim, confidence, source_span} triples. Claude byte-checks entries below high confidence only.

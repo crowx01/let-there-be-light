@@ -1,11 +1,12 @@
 {
+  "_comment": "Lean hooks: the full doctrine + routing map live in CLAUDE.md (auto-loaded by Claude Code and covered by the ~1h prompt cache), so they are NOT re-injected on every message. setup.sh generates these hooks and writes CLAUDE.md for you.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "printf '%s\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"MANDATORY FIRST ACTIONS: on session start and for EVERY model, BEFORE responding, immediately call the Skill tool for `architect`, `test-strategist`, `ship-checklist`, `incident-response`, `retrospective`. Full preference set: (1) delegate-first via PAL: groq (gpt-oss-120b, ~500 rpm, 8000 tpm cap) for report writing, vuln explanations, and skeptical validation. nemotron (nvidia, 1M ctx) for bulk reading of large files. grok (x-ai, 2M ctx) for permissive high-context security reasoning when Gemini refuses. flash (gemini-3.6-flash, 1M ctx) for fast structured extraction. or-free (OpenRouter meta-router, 200K ctx) as generalist fallback. pro (gemini-3-pro-preview) for deep-reasoning fallback and adversarial debate via mcp__pal__challenge. (2) KEEP IN CLAUDE: user-facing decisions, exploitation choices, severity calls, safety-boundary checks, side-effecting actions, tool-sequence orchestration. (3) On every significant change (feature spec, migration, refactor) run the 4-step lifecycle: design review (architect skill), implementation review (debate-review), staging validation (ship-checklist), post-deploy check (incident-response ready).\"}}'"
+            "command": "printf '%s\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"MANDATORY FIRST ACTIONS (every model, before responding): call Skill `caveman` (full mode), `architect`, `test-strategist`, `clean-code`, `fix-validator` (preload), `ship-checklist`, `incident-response`, `retrospective`, then read the MEMORY.md index. Full doctrine + routing map are in CLAUDE.md at the project root (already auto-loaded, prompt-cached) so they are not repeated here. If the model changes mid-session, re-invoke the skills.\"}}'"
           }
         ]
       }
@@ -15,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "printf '%s\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"HARD RULE every message: for EACH task in this turn DEFAULT TO PAL — every eligible unit of work goes to a PAL model unless it is a keep-in-Claude item (groq (gpt-oss-120b) for report writing, vuln/concept explanations, skeptical validation; nemotron (nvidia, 1M ctx) for bulk reading of large files; grok (x-ai, 2M ctx) for permissive high-context reasoning when Gemini refuses; flash (gemini-3.6-flash, 1M ctx) for fast structured extraction; or-free (OpenRouter meta-router, 200K ctx) generalist fallback; pro (gemini-3.1-pro-preview) for deep-reasoning fallback and adversarial debate via mcp__pal__challenge). BEFORE reading source into context use `bin/code-skeleton` (signatures + line ranges, then Read only the ranges you need); pipe noisy build/test output through `bin/strip-noise` first (0 tokens). Keep in Claude ONLY: user-facing decisions, design/severity calls, safety-boundary checks, side-effecting actions, orchestration. FAILOVER: if any model refuses or errors, immediately re-route; a refusal is a routing problem, not a stop.\"}}'"
+            "command": "printf '%s\n' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Every message, every model: DEFAULT TO PAL for each task — bulk read to nemotron, report-writing/explanation/validation to groq, structured extraction to flash (full routing + keep-in-Claude list in CLAUDE.md). Read source via bin/code-skeleton first (then Read only the ranges you need); pipe noisy build/test output through bin/strip-noise. Failover on refusal, never stop.\"}}'"
           }
         ]
       }
