@@ -21,10 +21,11 @@ command -v jq >/dev/null || { err "jq is required (apt install jq)"; exit 1; }
 # dawn palette: deep-indigo -> sky -> gold -> white
 INDIGO=$'\033[38;5;61m'; SKY=$'\033[38;5;117m'; GLD=$'\033[38;5;220m'; SUN=$'\033[38;5;226m'; WHT=$'\033[38;5;231m'
 printf '\n'
-printf '%s                    .           +   .         .%s\n' "$INDIGO" "$RST"
-printf '%s        .    +    %s.-''''''-.%s      +           .    +%s\n' "$INDIGO" "$SUN" "$INDIGO" "$RST"
-printf '%s              .   %s(  o   o  )%s .        +           %s\n' "$INDIGO" "$SUN" "$INDIGO" "$RST"
-printf '%s   +        .      %s`--------`%s        .         +   .%s\n' "$INDIGO" "$SUN" "$INDIGO" "$RST"
+printf '%s                              \\   |   /%s\n'        "$GLD" "$RST"
+printf '%s                            .  .---.  .%s\n'         "$SUN" "$RST"
+printf '%s                         --   ( %s(*)%s )   --%s\n'  "$GLD" "$SUN" "$GLD" "$RST"
+printf '%s                            .  `---`  .%s\n'         "$SUN" "$RST"
+printf '%s                              /   |   \\%s\n'        "$GLD" "$RST"
 printf '\n'
 printf '%s          _        _      _   _                              _%s\n' "$SKY" "$RST"
 printf '%s         | |  ___ | |_   | |_| |__   ___  _ __  ___    ___ | |_ %s\n' "$SKY" "$RST"
