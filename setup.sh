@@ -546,14 +546,14 @@ case "$ORCH" in
   1. Source your API keys:  source $(dirname "$TARGET")/.env.lttbl
   2. Restart Claude Code.
   3. Session-start skills auto-load on the next session.
-  4. Add more skills any time:  npx let-there-be-light add <skill>
+  4. Add more skills any time:  npx --yes github:crowx01/let-there-be-light add <skill>
                                 (or  ./setup.sh add <skill>)
 EOF
   ;;
   *) cat <<EOF
   1. Source your API keys:  source $(dirname "$TARGET")/.env.lttbl
   2. Open your project in your orchestrator.
-  3. Add more skills any time:  npx let-there-be-light add <skill>
+  3. Add more skills any time:  npx --yes github:crowx01/let-there-be-light add <skill>
 EOF
   ;;
 esac

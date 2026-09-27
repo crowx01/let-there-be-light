@@ -31,14 +31,55 @@ It is a framework of skills that turns your AI orchestrator into a senior engine
 - side-effecting actions (kubectl apply, terraform apply, DB migrations)
 - tool-sequence orchestration
 
-## The routing map
+## Model routing workflow
 
-- **groq** (openai/gpt-oss-120b, ~500 req/min, 8,000 tokens/min cap): ADRs, PR descriptions, post-mortems, release notes.
-- **gpt-5.1-codex** (400K, thinking): refactoring, boilerplate, test scaffolding, migrations.
-- **nemotron** (NVIDIA, 1M context): bulk reading of large codebases and log dumps.
-- **flash** (Gemini 3.6-flash, 1M context): fast structured extraction (API surface, deps, config diffs).
-- **or-free** (OpenRouter meta-router, 200K): generalist fallback.
-- **pro** (Gemini 3 Pro preview): deep architecture reasoning + adversarial ADR debate.
+The router picks a delegate per task class. High-context / low-tokens paths win by default; the orchestrator's own model is reserved for judgment calls and side effects.
+
+```mermaid
+flowchart TD
+    U[user prompt<br/>+ files] --> R{classify task}
+    R -->|design / ADR / debate| PRO[pro<br/>Gemini 3 Pro preview<br/>deep reasoning]
+    R -->|report / release notes /<br/>post-mortem / validation| GRQ[groq<br/>gpt-oss-120b<br/>~500 rpm · 8k tpm]
+    R -->|refactor / boilerplate /<br/>test scaffold / migration| CDX[gpt-5.1-codex<br/>400K · thinking]
+    R -->|bulk read big repo /<br/>log dumps| NEM[nemotron<br/>NVIDIA · 1M ctx]
+    R -->|structured extract /<br/>API surface / config diff| FLS[flash<br/>Gemini 3.6-flash · 1M ctx]
+    R -->|generic fallback /<br/>Gemini refused| ORF[or-free<br/>OpenRouter meta-router]
+    PRO & GRQ & CDX & NEM & FLS & ORF --> V{envelope<br/>confidence}
+    V -->|high| OUT[return to orchestrator]
+    V -->|low / refusal| RT[re-route to next<br/>in the map]
+    RT --> R
+```
+
+<details><summary>ASCII fallback</summary>
+
+```text
+                          user prompt + files
+                                   │
+                                   ▼
+              ┌────────────────────────────────────────┐
+              │   classify task                        │
+              └───┬─────┬─────┬─────┬─────┬────────────┘
+                  │     │     │     │     │
+     design/     │  report/│  refactor│  bulk    │  structured   generic /
+     ADR/debate  │  release│  boiler- │  read of │  extract      Gemini
+                 │  notes / │  plate/  │  large   │  (API /       refused
+                 │  validate│  tests/  │  repos/  │  config /
+                 │          │  migrate │  logs    │  deps)
+                 ▼          ▼          ▼          ▼          ▼          ▼
+                pro        groq       gpt-5.1-   nemotron    flash    or-free
+              Gemini 3   gpt-oss-      codex     NVIDIA    Gemini 3.6-  OR meta
+              Pro pre    120b        400K       1M ctx    flash 1M     router
+              (adversary)(500 rpm    (thinking) (bulk     (structured  (fallback)
+                         8k tpm)                readonly) extract)
+                 │          │          │          │          │          │
+                 └──────────┴──────────┴─────┬────┴──────────┴──────────┘
+                                             ▼
+                                    envelope confidence?
+                                     ├── high ──▶ return
+                                     └── low / refusal ──▶ re-route
+```
+
+</details>
 
 ## The 4-phase lifecycle
 
@@ -80,13 +121,16 @@ If any model refuses, times out, or errors, immediately re-route. Refusal is a r
 ## Install
 
 ```bash
-# One-liner (Node available)
-npx let-there-be-light
+# One-liner (Node available) — pulls the repo, then runs the installer:
+npx --yes github:crowx01/let-there-be-light
 
 # or clone + run bash
 git clone https://github.com/crowx01/let-there-be-light && cd let-there-be-light
 ./setup.sh
 ```
+
+> Not published to npm yet, so use the `github:` shorthand above (or `npm i -g .`
+> from a clone if you want a persistent `let-there-be-light` binary on `PATH`).
 
 `setup.sh` (and its `npx` wrapper) walks you through scope, orchestrator, which
 skills auto-load at session start, which PAL models you have keys for, and then
@@ -159,14 +203,15 @@ orchestrator and scope, the installer:
 **Add a single skill after install.** No need to re-run the wizard.
 
 ```bash
-npx let-there-be-light add caveman     # or: ./setup.sh add caveman
-npx let-there-be-light list            # show what's available
-npx let-there-be-light sync            # re-link every shipped skill
+npx --yes github:crowx01/let-there-be-light add caveman   # or: ./setup.sh add caveman
+npx --yes github:crowx01/let-there-be-light list          # show what's available
+npx --yes github:crowx01/let-there-be-light sync          # re-link every shipped skill
 ```
 
 **Add your own skill.** Drop a directory under `skills/<your-skill>/` with a
-`SKILL.md` (YAML frontmatter + prose body). Re-run `./setup.sh sync` (or `npx
-let-there-be-light sync`) and it becomes available to every registered agent.
+`SKILL.md` (YAML frontmatter + prose body). Re-run `./setup.sh sync` (or
+`npx --yes github:crowx01/let-there-be-light sync`) and it becomes available to
+every registered agent.
 
 **Update / remove.** Skills are symlinked (Claude Code) or synced with rsync
 (other agents) from `skills/`. Delete the source directory and re-run `sync`
@@ -181,7 +226,7 @@ flowchart TD
     C --> D1[Claude Code<br/>~/.claude/skills/<br/>symlinks]
     C --> D2[Cursor<br/>./skills-cursor/<br/>./rules/*.mdc]
     C --> D3[Cline / Codex /<br/>Aider / Generic<br/>./let-there-be-light-skills/]
-    E[npx let-there-be-light<br/>add SKILL] -.->|later| C
+    E[npx github:crowx01/<br/>let-there-be-light add SKILL] -.->|later| C
     F[./setup.sh reset] -.->|clears checkpoint| C
 ```
 
@@ -200,8 +245,8 @@ flowchart TD
                   │
                   ▼
      ┌───────────────────────────┐        ┌────────────────────────┐
-     │  Installation + Sync      │◀── ─ ─ │ npx lttbl add <skill>  │
-     │  setup.sh  /  npx         │        │ ./setup.sh reset       │
+     │  Installation + Sync      │◀── ─ ─ │ npx github:crowx01/    │
+     │  setup.sh  /  npx --yes   │        │ let-there-be-light add │
      └───┬─────────┬──────────┬──┘        └────────────────────────┘
          │         │          │
          ▼         ▼          ▼

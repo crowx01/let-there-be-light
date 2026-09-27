@@ -18,15 +18,15 @@ const BOLD = '\x1b[1m', DIM = '\x1b[2m', CYN = '\x1b[36m', GRN = '\x1b[32m',
 function usage() {
   console.log(`${BOLD}let-there-be-light${RST}  interactive AI-orchestrator installer
 
-${BOLD}Usage${RST}
-  npx let-there-be-light                install (interactive; resumes on Ctrl+C)
-  npx let-there-be-light add <skill>    install one shipped skill
-  npx let-there-be-light list           list shipped skills
-  npx let-there-be-light sync           re-run rules + skills sync (no prompts)
-  npx let-there-be-light reset          clear installation checkpoint
-  npx let-there-be-light --help         this help
+${BOLD}Usage${RST} (github: form works without npm publish)
+  npx --yes github:crowx01/let-there-be-light                install
+  npx --yes github:crowx01/let-there-be-light add <skill>    install one shipped skill
+  npx --yes github:crowx01/let-there-be-light list           list shipped skills
+  npx --yes github:crowx01/let-there-be-light sync           re-run rules + skills sync
+  npx --yes github:crowx01/let-there-be-light reset          clear checkpoint
+  npx --yes github:crowx01/let-there-be-light --help         this help
 
-${DIM}Aliases: lttbl${RST}
+${DIM}From a local clone: ./setup.sh <same-verbs>   or   node bin/cli.js <verbs>${RST}
 `);
 }
 
@@ -78,7 +78,7 @@ switch (cmd) {
     break;
   case 'add':
     if (!rest[0]) {
-      console.error(`${RED}✗${RST} usage: npx let-there-be-light add <skill>`);
+      console.error(`${RED}✗${RST} usage: npx --yes github:crowx01/let-there-be-light add <skill>`);
       listSkills();
       process.exit(2);
     }
